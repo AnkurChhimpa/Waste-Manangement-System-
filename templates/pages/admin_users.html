@@ -1,0 +1,506 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}User Management - Trashify{% endblock %}
+
+{% block content %}
+<div class="admin-users-page">
+    <div class="page-header">
+        <div class="container">
+            <a href="/admin-dashboard/" class="back-btn">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </a>
+            <h1>User Management</h1>
+            <p>Monitor and manage all registered users</p>
+        </div>
+    </div>
+
+    <div class="users-content">
+        <div class="container">
+            <div class="users-stats">
+                <div class="stat-card">
+                    <div class="stat-number">{{ total_users }}</div>
+                    <div class="stat-label">Total Users</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">{{ active_users }}</div>
+                    <div class="stat-label">Active Users</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">{{ volunteers }}</div>
+                    <div class="stat-label">Volunteers</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">{{ new_this_week }}</div>
+                    <div class="stat-label">New This Week</div>
+                </div>
+            </div>
+
+            <div class="users-section">
+                <div class="section-header">
+                    <h2>All Users</h2>
+                    <div class="filters">
+                        <select id="userFilter" onchange="filterUsers()">
+                            <option value="all">All Users</option>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                            <option value="volunteers">Volunteers</option>
+                            <option value="new_this_week">New This Week</option>
+                        </select>
+                        <input type="text" placeholder="Search users..." class="search-input" id="searchInput" onkeyup="filterUsers()">
+                    </div>
+                </div>
+
+                <div class="users-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Email</th>
+                                <th>Join Date</th>
+                                <th>Role</th>
+                                <th>Reports</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users %}
+                            <tr class="user-row" data-status="{% if user.is_active %}active{% else %}inactive{% endif %}" data-role="{% if user.is_superuser %}admin{% else %}volunteer{% endif %}" data-username="{{ user.username|lower }}" data-email="{{ user.email|lower }}" data-joined="{{ user.date_joined|date:'Y-m-d' }}">
+                                <td>
+                                    <div class="user-info">
+                                        <div class="user-avatar">
+                                            {% if user.is_superuser %}👑{% else %}👤{% endif %}
+                                        </div>
+                                        <div class="user-details">
+                                            <strong>{{ user.username }}</strong>
+                                            {% if user.first_name %}
+                                                <span>{{ user.first_name }} {{ user.last_name }}</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>{{ user.email }}</td>
+                                <td>{{ user.date_joined|date:"M d, Y" }}</td>
+                                <td>
+                                    {% if user.is_superuser %}
+                                        <span class="role-badge admin">Admin</span>
+                                    {% else %}
+                                        <span class="role-badge user">User</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="report-count">{{ user.wastereport_set.count }}</span>
+                                </td>
+                                <td>
+                                    {% if user.is_active %}
+                                        <span class="status-badge active">Active</span>
+                                    {% else %}
+                                        <span class="status-badge inactive">Inactive</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="action-btn view" title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        {% if not user.is_superuser %}
+                                        <button class="action-btn delete" title="Delete User" onclick="deleteUser({{ user.id }}, '{{ user.username|escapejs }}')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="user-issues">
+                <h2>Recent User Issues</h2>
+                <div class="issues-list">
+                    <div class="issue-item">
+                        <div class="issue-icon">
+                            <i class="fas fa-exclamation-circle"></i>
+                        </div>
+                        <div class="issue-details">
+                            <h4>Login Issues</h4>
+                            <p>User "john_doe" reported login problems • 2 hours ago</p>
+                        </div>
+                        <div class="issue-status pending">Pending</div>
+                    </div>
+
+                    <div class="issue-item">
+                        <div class="issue-icon">
+                            <i class="fas fa-bug"></i>
+                        </div>
+                        <div class="issue-details">
+                            <h4>Report Submission Error</h4>
+                            <p>Multiple users unable to submit reports • 4 hours ago</p>
+                        </div>
+                        <div class="issue-status resolved">Resolved</div>
+                    </div>
+
+                    <div class="issue-item">
+                        <div class="issue-icon">
+                            <i class="fas fa-question-circle"></i>
+                        </div>
+                        <div class="issue-details">
+                            <h4>Account Verification</h4>
+                            <p>User "sarah_chen" needs email verification • Yesterday</p>
+                        </div>
+                        <div class="issue-status in-progress">In Progress</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.admin-users-page {
+    margin-top: 65px;
+    min-height: calc(100vh - 65px);
+}
+
+.page-header {
+    background: linear-gradient(135deg, #17a2b8, #20c997);
+    color: white;
+    padding: 3rem 0;
+}
+
+.back-btn {
+    color: white;
+    text-decoration: none;
+    margin-bottom: 1rem;
+    display: inline-block;
+    opacity: 0.9;
+}
+
+.page-header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.users-content {
+    padding: 4rem 0;
+    background: #f8f9fa;
+}
+
+.users-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.stat-card {
+    background: white;
+    padding: 2rem;
+    border-radius: 15px;
+    text-align: center;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #17a2b8;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    color: #666;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+}
+
+.users-section {
+    background: white;
+    border-radius: 15px;
+    padding: 2rem;
+    margin-bottom: 3rem;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.filters {
+    display: flex;
+    gap: 1rem;
+}
+
+.filters select,
+.search-input {
+    padding: 8px 16px;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    background: white;
+}
+
+.users-table {
+    overflow-x: auto;
+}
+
+.users-table table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.users-table th,
+.users-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.users-table th {
+    background: #f8f9fa;
+    font-weight: 600;
+    color: #333;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.user-avatar {
+    font-size: 1.5rem;
+}
+
+.user-details strong {
+    display: block;
+    color: #333;
+}
+
+.user-details span {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.role-badge {
+    padding: 4px 8px;
+    border-radius: 10px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.role-badge.admin {
+    background: #ffebee;
+    color: #c62828;
+}
+
+.role-badge.user {
+    background: #e3f2fd;
+    color: #1976d2;
+}
+
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 10px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-badge.active {
+    background: #e8f5e8;
+    color: #2e7d32;
+}
+
+.status-badge.inactive {
+    background: #ffebee;
+    color: #c62828;
+}
+
+.report-count {
+    font-weight: 600;
+    color: #17a2b8;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.action-btn {
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+}
+
+.action-btn.view { background: #6c757d; color: white; }
+.action-btn.edit { background: #ffc107; color: #333; }
+.action-btn.delete { background: #dc3545; color: white; }
+.action-btn.deactivate { background: #dc3545; color: white; }
+.action-btn.activate { background: #28a745; color: white; }
+
+.action-btn:hover {
+    transform: translateY(-1px);
+}
+
+.user-issues {
+    background: white;
+    border-radius: 15px;
+    padding: 2rem;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+}
+
+.user-issues h2 {
+    color: #333;
+    margin-bottom: 2rem;
+}
+
+.issues-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.issue-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    border-radius: 10px;
+    border: 2px solid #e9ecef;
+    transition: all 0.3s;
+}
+
+.issue-item:hover {
+    border-color: #17a2b8;
+}
+
+.issue-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #17a2b8;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.issue-details {
+    flex: 1;
+}
+
+.issue-details h4 {
+    margin: 0 0 0.25rem 0;
+    color: #333;
+}
+
+.issue-details p {
+    margin: 0;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.issue-status {
+    padding: 6px 12px;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.issue-status.pending { background: #fff3cd; color: #856404; }
+.issue-status.resolved { background: #d4edda; color: #155724; }
+.issue-status.in-progress { background: #d1ecf1; color: #0c5460; }
+
+@media (max-width: 768px) {
+    .section-header {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .filters {
+        width: 100%;
+        flex-direction: column;
+    }
+    
+    .users-table {
+        font-size: 0.9rem;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+    }
+}
+</style>
+
+<script>
+function deleteUser(userId, username) {
+    if (confirm(`Are you sure you want to delete user "${username}"? This action cannot be undone and will remove all their data.`)) {
+        fetch('/delete-user/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ user_id: userId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            alert('Error deleting user. Please try again.');
+        });
+    }
+}
+
+function filterUsers() {
+    const filterValue = document.getElementById('userFilter').value;
+    const searchValue = document.getElementById('searchInput').value.toLowerCase();
+    const userRows = document.querySelectorAll('.user-row');
+    
+    // Calculate date one week ago
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    
+    userRows.forEach(row => {
+        const status = row.dataset.status;
+        const role = row.dataset.role;
+        const username = row.dataset.username;
+        const email = row.dataset.email;
+        const joinedDate = new Date(row.dataset.joined);
+        
+        let statusMatch = true;
+        if (filterValue === 'active') statusMatch = status === 'active';
+        else if (filterValue === 'inactive') statusMatch = status === 'inactive';
+        else if (filterValue === 'volunteers') statusMatch = role === 'volunteer';
+        else if (filterValue === 'new_this_week') statusMatch = joinedDate >= weekAgo;
+        
+        const searchMatch = username.includes(searchValue) || email.includes(searchValue);
+        
+        if (statusMatch && searchMatch) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+</script>
+{% endblock %}

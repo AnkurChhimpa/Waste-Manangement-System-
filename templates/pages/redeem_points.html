@@ -1,0 +1,520 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Redeem Points - Trashify{% endblock %}
+
+{% block content %}
+<div class="redeem-page">
+    <div class="page-header">
+        <div class="container">
+            <a href="/dashboard/" class="back-btn">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </a>
+            <h1>Rewards Center</h1>
+            <p>Spin the wheel or choose from premium rewards</p>
+        </div>
+    </div>
+
+    <div class="redeem-content">
+        <div class="container">
+            <div class="points-balance">
+                <div class="balance-card">
+                    <div class="balance-icon">
+                        <i class="fas fa-coins"></i>
+                    </div>
+                    <div class="balance-info">
+                        <h2 id="userPoints">{{ user_points|default:0 }}</h2>
+                        <p>Available Points</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="main-content">
+                <div class="spin-section">
+                    <div class="spin-card">
+                        <h3>Lucky Spin Wheel</h3>
+                        <p>Spin for instant rewards! Only 5 points per spin</p>
+                        <div class="wheel-container">
+                            <canvas id="wheel" width="300" height="300"></canvas>
+                            <div class="wheel-pointer"></div>
+                        </div>
+                        <button class="spin-btn" id="spinBtn" onclick="spinWheel()">SPIN (5 Points)</button>
+                    </div>
+                </div>
+
+                <div class="rewards-section">
+                    <h3>Premium Rewards</h3>
+                    <div class="rewards-grid">
+                        <div class="reward-card">
+                            <div class="reward-image">
+                                <i class="fas fa-gift"></i>
+                            </div>
+                            <div class="reward-info">
+                                <h4>Eco Gift Voucher</h4>
+                                <p>₹100 voucher for eco-friendly products</p>
+                                <div class="reward-cost">100 Points</div>
+                            </div>
+                            <button class="redeem-reward-btn" onclick="redeemReward('voucher', 100)">Redeem</button>
+                        </div>
+
+                        <div class="reward-card">
+                            <div class="reward-image">
+                                <i class="fas fa-tshirt"></i>
+                            </div>
+                            <div class="reward-info">
+                                <h4>Eco T-Shirt</h4>
+                                <p>Organic cotton t-shirt with environmental message</p>
+                                <div class="reward-cost">60 Points</div>
+                            </div>
+                            <button class="redeem-reward-btn" onclick="redeemReward('tshirt', 60)">Redeem</button>
+                        </div>
+
+                        <div class="reward-card">
+                            <div class="reward-image">
+                                <i class="fas fa-credit-card"></i>
+                            </div>
+                            <div class="reward-info">
+                                <h4>Shopping Gift Card</h4>
+                                <p>₹500 gift card for popular shopping platforms</p>
+                                <div class="reward-cost">200 Points</div>
+                            </div>
+                            <button class="redeem-reward-btn" onclick="redeemReward('giftcard', 200)">Redeem</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.redeem-page {
+    margin-top: 65px;
+    min-height: calc(100vh - 65px);
+    background: #f0f2f5;
+}
+
+.page-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem 0;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+}
+
+.back-btn {
+    color: white;
+    text-decoration: none;
+    margin-bottom: 1rem;
+    display: inline-block;
+    opacity: 0.9;
+    transition: opacity 0.3s;
+    background: rgba(255,255,255,0.1);
+    padding: 8px 16px;
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+}
+
+.back-btn:hover {
+    opacity: 1;
+    background: rgba(255,255,255,0.2);
+}
+
+.page-header h1 {
+    font-size: 2.8rem;
+    margin-bottom: 0.5rem;
+    font-weight: 700;
+}
+
+.redeem-content {
+    padding: 4rem 0;
+}
+
+.points-balance {
+    margin-bottom: 3rem;
+    text-align: center;
+}
+
+.balance-card {
+    background: white;
+    padding: 2.5rem;
+    border-radius: 25px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+    display: inline-flex;
+    align-items: center;
+    gap: 2rem;
+    border: 1px solid rgba(102, 126, 234, 0.1);
+    backdrop-filter: blur(20px);
+}
+
+.balance-icon {
+    font-size: 3.5rem;
+    color: #667eea;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.balance-info h2 {
+    font-size: 3rem;
+    margin: 0;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 800;
+}
+
+.balance-info p {
+    margin: 0;
+    color: #666;
+    font-size: 1.2rem;
+    font-weight: 500;
+}
+
+.main-content {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 4rem;
+    align-items: start;
+}
+
+.spin-section {
+    display: flex;
+    justify-content: center;
+}
+
+.spin-card {
+    background: white;
+    padding: 3rem;
+    border-radius: 25px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+    text-align: center;
+    width: 100%;
+    max-width: 400px;
+}
+
+.spin-card h3 {
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+    color: #333;
+    font-weight: 700;
+}
+
+.spin-card p {
+    color: #666;
+    margin-bottom: 2rem;
+    font-size: 1.1rem;
+}
+
+.wheel-container {
+    position: relative;
+    margin: 2rem auto;
+    width: 300px;
+    height: 300px;
+}
+
+.wheel {
+    width: 300px;
+    height: 300px;
+    border-radius: 50%;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    transition: transform 3s cubic-bezier(0.23, 1, 0.32, 1);
+    border: 4px solid #fff;
+}
+
+.wheel-segment {
+    position: absolute;
+    width: 50%;
+    height: 50%;
+    transform-origin: 100% 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: white;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+    text-align: center;
+    padding: 10px;
+    box-sizing: border-box;
+    border: 2px solid rgba(255,255,255,0.3);
+}
+
+.wheel-segment span {
+    line-height: 1;
+    transform: translateX(-50%) translateY(-50%);
+    font-size: 0.7rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.wheel-segment:nth-child(1) { background: #ff6b6b; transform: rotate(0deg); }
+.wheel-segment:nth-child(2) { background: #4ecdc4; transform: rotate(45deg); }
+.wheel-segment:nth-child(3) { background: #45b7d1; transform: rotate(90deg); }
+.wheel-segment:nth-child(4) { background: #f9ca24; transform: rotate(135deg); }
+.wheel-segment:nth-child(5) { background: #f0932b; transform: rotate(180deg); }
+.wheel-segment:nth-child(6) { background: #eb4d4b; transform: rotate(225deg); }
+.wheel-segment:nth-child(7) { background: #6c5ce7; transform: rotate(270deg); }
+.wheel-segment:nth-child(8) { background: #a29bfe; transform: rotate(315deg); }
+
+
+
+.wheel-pointer {
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 15px solid transparent;
+    border-right: 15px solid transparent;
+    border-top: 25px solid #333;
+    z-index: 10;
+}
+
+.spin-btn {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    border-radius: 25px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+    width: 100%;
+}
+
+.spin-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4);
+}
+
+.spin-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.rewards-section h3 {
+    font-size: 1.8rem;
+    margin-bottom: 2rem;
+    color: #333;
+    font-weight: 700;
+}
+
+.rewards-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+}
+
+.reward-card {
+    background: white;
+    padding: 2rem;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    transition: all 0.3s;
+    border: 1px solid rgba(102, 126, 234, 0.1);
+}
+
+.reward-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+}
+
+.reward-image {
+    font-size: 2.5rem;
+    color: #667eea;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+    padding: 1rem;
+    border-radius: 15px;
+    min-width: 70px;
+    text-align: center;
+}
+
+.reward-info {
+    flex-grow: 1;
+}
+
+.reward-info h4 {
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+    color: #333;
+    font-weight: 600;
+}
+
+.reward-info p {
+    color: #666;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.reward-cost {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #667eea;
+}
+
+.redeem-reward-btn {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+    min-width: 100px;
+}
+
+.redeem-reward-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+}
+
+@media (max-width: 768px) {
+    .main-content {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+    }
+    
+    .balance-card {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+    }
+    
+    .reward-card {
+        flex-direction: column;
+        text-align: center;
+    }
+}
+</style>
+
+<script>
+let currentPoints = {{ user_points|default:0 }};
+let isSpinning = false;
+let currentRotation = 0;
+
+function drawWheel() {
+    const canvas = document.getElementById('wheel');
+    const ctx = canvas.getContext('2d');
+    const centerX = 150;
+    const centerY = 150;
+    const radius = 140;
+    
+    const prizes = ['Food Voucher', 'Eco Sticker', 'Movie Ticket', 'Try Again', 'Shopping Voucher', 'Eco Badge', 'Coffee Voucher', 'Bonus Spin'];
+    const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#f9ca24', '#f0932b', '#eb4d4b', '#6c5ce7', '#a29bfe'];
+    
+    ctx.clearRect(0, 0, 300, 300);
+    
+    for (let i = 0; i < 8; i++) {
+        const startAngle = (i * Math.PI) / 4 + currentRotation;
+        const endAngle = ((i + 1) * Math.PI) / 4 + currentRotation;
+        
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+        ctx.closePath();
+        ctx.fillStyle = colors[i];
+        ctx.fill();
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        ctx.rotate(startAngle + Math.PI / 8);
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 11px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(prizes[i], 90, 0);
+        ctx.restore();
+    }
+}
+
+function spinWheel() {
+    if (isSpinning) return;
+    
+    if (currentPoints < 5) {
+        alert('You need at least 5 points to spin!');
+        return;
+    }
+    
+    isSpinning = true;
+    currentPoints -= 5;
+    document.getElementById('userPoints').textContent = currentPoints;
+    document.getElementById('spinBtn').disabled = true;
+    document.getElementById('spinBtn').textContent = 'SPINNING...';
+    
+    const prizes = ['Food Voucher', 'Eco Sticker', 'Movie Ticket', 'Try Again', 'Shopping Voucher', 'Eco Badge', 'Coffee Voucher', 'Bonus Spin'];
+    const randomIndex = Math.floor(Math.random() * 8);
+    const spinAmount = Math.PI * 10 + (randomIndex * Math.PI / 4);
+    
+    let startTime = null;
+    function animate(timestamp) {
+        if (!startTime) startTime = timestamp;
+        const progress = (timestamp - startTime) / 3000;
+        
+        if (progress < 1) {
+            currentRotation = spinAmount * (1 - Math.pow(1 - progress, 3));
+            drawWheel();
+            requestAnimationFrame(animate);
+        } else {
+            currentRotation = spinAmount;
+            drawWheel();
+            
+            const prize = prizes[randomIndex];
+            showPrizeResult(prize);
+            
+            isSpinning = false;
+            document.getElementById('spinBtn').disabled = false;
+            document.getElementById('spinBtn').textContent = 'SPIN (5 Points)';
+        }
+    }
+    requestAnimationFrame(animate);
+}
+
+drawWheel();
+
+function showPrizeResult(prize) {
+    let message = `🎉 You won: ${prize}!`;
+    
+    // Handle different prizes
+    if (prize === 'Try Again') {
+        currentPoints += 5; // Refund the spin cost
+        document.getElementById('userPoints').textContent = currentPoints;
+        message = '🔄 Try Again! Your points have been refunded.';
+    } else if (prize === 'Bonus Spin') {
+        currentPoints += 5; // Refund + free spin
+        document.getElementById('userPoints').textContent = currentPoints;
+        message = '🎁 Bonus Spin! You get a free spin!';
+    }
+    
+    alert(message);
+}
+
+function redeemReward(rewardType, cost) {
+    if (currentPoints < cost) {
+        alert(`You need ${cost - currentPoints} more points to redeem this reward.`);
+        return;
+    }
+    
+    if (confirm(`Are you sure you want to redeem this reward for ${cost} points?`)) {
+        currentPoints -= cost;
+        document.getElementById('userPoints').textContent = currentPoints;
+        alert('Reward redeemed successfully! You will receive details via email.');
+    }
+}
+</script>
+{% endblock %}

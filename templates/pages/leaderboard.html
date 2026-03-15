@@ -1,0 +1,378 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Leaderboard - Trashify{% endblock %}
+
+{% block content %}
+<div class="leaderboard-page">
+    <div class="page-header">
+        <div class="container">
+            <a href="/user-dashboard/" class="back-btn">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </a>
+            <h1>Community Leaderboard</h1>
+            <p>See who's making the biggest environmental impact</p>
+        </div>
+    </div>
+
+    <div class="leaderboard-content">
+        <div class="container">
+            <div class="top-performers">
+                <div class="podium">
+                    {% if users_data|length >= 2 %}
+                    <div class="podium-item second">
+                        <div class="rank-badge silver">2</div>
+                        <div class="avatar">👩</div>
+                        <h3>{{ users_data.1.user.username }}</h3>
+                        <p>{{ users_data.1.points }} points</p>
+                    </div>
+                    {% endif %}
+                    {% if users_data|length >= 1 %}
+                    <div class="podium-item first">
+                        <div class="rank-badge gold">1</div>
+                        <div class="avatar">👨</div>
+                        <h3>{{ users_data.0.user.username }}</h3>
+                        <p>{{ users_data.0.points }} points</p>
+                        <div class="crown">👑</div>
+                    </div>
+                    {% endif %}
+                    {% if users_data|length >= 3 %}
+                    <div class="podium-item third">
+                        <div class="rank-badge bronze">3</div>
+                        <div class="avatar">👩</div>
+                        <h3>{{ users_data.2.user.username }}</h3>
+                        <p>{{ users_data.2.points }} points</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="leaderboard-table">
+                <div class="table-header">
+                    <h2>Full Rankings</h2>
+                    <div class="filters">
+                        <select>
+                            <option>This Month</option>
+                            <option>This Week</option>
+                            <option>All Time</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="rankings">
+                    {% for user_data in users_data %}
+                    <div class="rank-item{% if user_data.user == request.user %} your-rank{% endif %}">
+                        <div class="rank-number">{{ forloop.counter }}</div>
+                        <div class="user-info">
+                            <div class="avatar">{% if user_data.user == request.user %}😎{% elif forloop.counter0|divisibleby:2 %}👨{% else %}👩{% endif %}</div>
+                            <div class="user-details">
+                                <h4>{% if user_data.user == request.user %}You{% else %}{{ user_data.user.username }}{% endif %}</h4>
+                                <p>{{ user_data.total_reports }} reports • {{ user_data.completed_reports }} cleanups</p>
+                            </div>
+                        </div>
+                        <div class="points">{{ user_data.points }} pts</div>
+                        <div class="trend up">📈</div>
+                    </div>
+                    {% empty %}
+                    <div class="rank-item">
+                        <div class="user-info">
+                            <div class="avatar">👤</div>
+                            <div class="user-details">
+                                <h4>No users yet</h4>
+                                <p>Be the first to submit a report!</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="achievements-section">
+                <h2>Your Achievements</h2>
+                <div class="achievements-grid">
+                    <div class="achievement earned">
+                        <div class="achievement-icon">🌱</div>
+                        <h4>First Report</h4>
+                        <p>Submit your first waste report</p>
+                    </div>
+                    <div class="achievement earned">
+                        <div class="achievement-icon">📸</div>
+                        <h4>Photographer</h4>
+                        <p>Upload 10 waste photos</p>
+                    </div>
+                    <div class="achievement locked">
+                        <div class="achievement-icon">🏆</div>
+                        <h4>Top 10</h4>
+                        <p>Reach top 10 in leaderboard</p>
+                    </div>
+                    <div class="achievement locked">
+                        <div class="achievement-icon">🌟</div>
+                        <h4>Community Hero</h4>
+                        <p>Earn 1000 points</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.leaderboard-page {
+    margin-top: 65px;
+    min-height: calc(100vh - 65px);
+}
+
+.page-header {
+    background: linear-gradient(135deg, #ffc107, #fd7e14);
+    color: white;
+    padding: 3rem 0;
+}
+
+.back-btn {
+    color: white;
+    text-decoration: none;
+    margin-bottom: 1rem;
+    display: inline-block;
+    opacity: 0.9;
+    transition: opacity 0.3s;
+}
+
+.back-btn:hover {
+    opacity: 1;
+}
+
+.page-header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.leaderboard-content {
+    padding: 4rem 0;
+    background: #f8f9fa;
+}
+
+.top-performers {
+    margin-bottom: 4rem;
+}
+
+.podium {
+    display: flex;
+    justify-content: center;
+    align-items: end;
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.podium-item {
+    background: white;
+    padding: 2rem;
+    border-radius: 15px;
+    text-align: center;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    position: relative;
+}
+
+.podium-item.first {
+    transform: scale(1.1);
+    z-index: 2;
+}
+
+.rank-badge {
+    position: absolute;
+    top: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: white;
+}
+
+.rank-badge.gold { background: linear-gradient(135deg, #ffd700, #ffed4e); }
+.rank-badge.silver { background: linear-gradient(135deg, #c0c0c0, #e5e5e5); }
+.rank-badge.bronze { background: linear-gradient(135deg, #cd7f32, #daa520); }
+
+.avatar {
+    font-size: 3rem;
+    margin: 1rem 0;
+}
+
+.crown {
+    position: absolute;
+    top: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 2rem;
+}
+
+.leaderboard-table {
+    background: white;
+    border-radius: 15px;
+    padding: 2rem;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    margin-bottom: 3rem;
+}
+
+.table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.table-header h2 {
+    color: #333;
+    margin: 0;
+}
+
+.filters select {
+    padding: 8px 16px;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    background: white;
+}
+
+.rank-item {
+    display: grid;
+    grid-template-columns: 60px 1fr auto auto;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    border-radius: 10px;
+    margin-bottom: 0.5rem;
+    transition: background 0.3s;
+}
+
+.rank-item:hover {
+    background: #f8f9fa;
+}
+
+.rank-item.your-rank {
+    background: linear-gradient(135deg, rgba(40,167,69,0.1), rgba(32,201,151,0.1));
+    border: 2px solid #28a745;
+}
+
+.rank-number {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #28a745;
+    text-align: center;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.user-info .avatar {
+    font-size: 2rem;
+}
+
+.user-details h4 {
+    margin: 0 0 0.25rem 0;
+    color: #333;
+}
+
+.user-details p {
+    margin: 0;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.points {
+    font-weight: bold;
+    color: #28a745;
+    font-size: 1.1rem;
+}
+
+.trend {
+    font-size: 0.9rem;
+}
+
+.trend.up { color: #28a745; }
+.trend.down { color: #dc3545; }
+
+.achievements-section {
+    background: white;
+    border-radius: 15px;
+    padding: 2rem;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+}
+
+.achievements-section h2 {
+    color: #333;
+    margin-bottom: 2rem;
+}
+
+.achievements-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+}
+
+.achievement {
+    padding: 1.5rem;
+    border-radius: 10px;
+    text-align: center;
+    transition: transform 0.3s;
+}
+
+.achievement.earned {
+    background: linear-gradient(135deg, rgba(40,167,69,0.1), rgba(32,201,151,0.1));
+    border: 2px solid #28a745;
+}
+
+.achievement.locked {
+    background: #f8f9fa;
+    border: 2px solid #dee2e6;
+    opacity: 0.6;
+}
+
+.achievement:hover {
+    transform: translateY(-3px);
+}
+
+.achievement-icon {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+}
+
+.achievement h4 {
+    color: #333;
+    margin-bottom: 0.5rem;
+}
+
+.achievement p {
+    color: #666;
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+@media (max-width: 768px) {
+    .podium {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .podium-item.first {
+        transform: none;
+        order: -1;
+    }
+    
+    .rank-item {
+        grid-template-columns: 40px 1fr;
+        gap: 0.5rem;
+    }
+    
+    .points, .trend {
+        grid-column: 2;
+        justify-self: end;
+    }
+}
+</style>
+{% endblock %}

@@ -1,0 +1,564 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Analytics Dashboard - Trashify{% endblock %}
+
+{% block content %}
+<div class="analytics-page">
+    <div class="page-header">
+        <div class="container">
+            <a href="/user-dashboard/" class="back-btn">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </a>
+            <h1>Analytics Dashboard</h1>
+            <p>Track your environmental impact and progress</p>
+        </div>
+    </div>
+
+    <div class="dashboard-content">
+        <div class="container">
+            <div class="stats-overview">
+                <div class="stat-card clickable" onclick="filterReports('all')">
+                    <div class="stat-icon">
+                        <i class="fas fa-clipboard-list"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>{{ total_reports }}</h3>
+                        <p>Total Reports</p>
+                        <span class="trend positive">All time</span>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>{{ points }}</h3>
+                        <p>Points Earned</p>
+                        <span class="trend positive">{{ total_reports }} reports</span>
+                        <button class="redeem-btn" onclick="redeemPoints()">Redeem Points</button>
+                    </div>
+                </div>
+
+                <div class="stat-card clickable" onclick="filterReports('completed')">
+                    <div class="stat-icon">
+                        <i class="fas fa-broom"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>{{ completed_reports }}</h3>
+                        <p>Areas Cleaned</p>
+                        <span class="trend positive">Completed</span>
+                    </div>
+                </div>
+
+                <div class="stat-card clickable" onclick="filterReports('pending')">
+                    <div class="stat-icon">
+                        <i class="fas fa-hourglass-half"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>{{ pending_reports }}</h3>
+                        <p>Pending Reports</p>
+                        <span class="trend positive">Awaiting action</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="charts-section" id="chart-section">
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3>Weekly Activity</h3>
+                        <select onchange="updateChart(this.value)">
+                            <option value="4" {% if weeks == 4 %}selected{% endif %}>Last 4 weeks</option>
+                            <option value="8" {% if weeks == 8 %}selected{% endif %}>Last 8 weeks</option>
+                            <option value="12" {% if weeks == 12 %}selected{% endif %}>Last 12 weeks</option>
+                        </select>
+                    </div>
+                    <div class="chart-placeholder">
+                        <div class="bars" id="chartBars">
+                            {% for count in weekly_data reversed %}
+                            <div class="bar" style="height: {% if weekly_data|length > 0 %}{% widthratio count weekly_data|dictsort:0|last 100 %}{% else %}20{% endif %}%;">
+                                <span class="bar-value">{{ count }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div class="chart-labels" id="chartLabels">
+                            {% for i in weekly_data %}
+                            <span>Week {{ forloop.counter }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="impact-summary">
+                    <h3>Environmental Impact</h3>
+                    <div class="impact-items">
+                        <div class="impact-item">
+                            <div class="impact-icon">🌱</div>
+                            <div class="impact-details">
+                                <h4>CO₂ Saved</h4>
+                                <p>~15.2 kg</p>
+                            </div>
+                        </div>
+                        <div class="impact-item">
+                            <div class="impact-icon">♻️</div>
+                            <div class="impact-details">
+                                <h4>Waste Recycled</h4>
+                                <p>~8.5 kg</p>
+                            </div>
+                        </div>
+                        <div class="impact-item">
+                            <div class="impact-icon">🌍</div>
+                            <div class="impact-details">
+                                <h4>Areas Improved</h4>
+                                <p>5 locations</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="recent-activity">
+                <div class="activity-header">
+                    <h3 id="activity-title">Your Reports</h3>
+                    <a href="/report-waste/" class="add-report-btn">
+                        <i class="fas fa-plus"></i> New Report
+                    </a>
+                </div>
+
+                <div class="activity-list" id="reports-list">
+                    {% for report in user_reports %}
+                    <div class="activity-item" data-status="{{ report.status }}">
+                        <div class="activity-icon {% if report.status == 'completed' %}resolved{% elif report.status == 'pending' %}submitted{% else %}submitted{% endif %}">
+                            {% if report.status == 'completed' %}
+                            <i class="fas fa-check"></i>
+                            {% else %}
+                            <i class="fas fa-camera"></i>
+                            {% endif %}
+                        </div>
+                        <div class="activity-details">
+                            <h4>{{ report.get_waste_type_display }} - {{ report.get_status_display }}</h4>
+                            <p>{{ report.location }} • {{ report.created_at|timesince }} ago</p>
+                        </div>
+                        <div class="activity-points">+5 pts</div>
+                    </div>
+                    {% empty %}
+                    <div class="activity-item">
+                        <div class="activity-icon submitted">
+                            <i class="fas fa-info-circle"></i>
+                        </div>
+                        <div class="activity-details">
+                            <h4>No reports yet</h4>
+                            <p>Start by submitting your first waste report</p>
+                        </div>
+                        <div class="activity-points">0 pts</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.analytics-page {
+    margin-top: 65px;
+    min-height: calc(100vh - 65px);
+}
+
+.page-header {
+    background: linear-gradient(135deg, #17a2b8, #6f42c1);
+    color: white;
+    padding: 3rem 0;
+}
+
+.back-btn {
+    color: white;
+    text-decoration: none;
+    margin-bottom: 1rem;
+    display: inline-block;
+    opacity: 0.9;
+    transition: opacity 0.3s;
+}
+
+.back-btn:hover {
+    opacity: 1;
+}
+
+.page-header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.dashboard-content {
+    padding: 4rem 0;
+    background: #f8f9fa;
+}
+
+.stats-overview {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.stat-card {
+    background: white;
+    padding: 2rem;
+    border-radius: 15px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    transition: transform 0.3s;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+}
+
+.stat-icon {
+    font-size: 2.5rem;
+    color: #28a745;
+    background: rgba(40,167,69,0.1);
+    padding: 1rem;
+    border-radius: 50%;
+}
+
+.stat-info h3 {
+    font-size: 2rem;
+    margin: 0 0 0.5rem 0;
+    color: #333;
+}
+
+.stat-info p {
+    margin: 0 0 0.5rem 0;
+    color: #666;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.trend {
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.trend.positive {
+    color: #28a745;
+}
+
+.redeem-btn {
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 0.5rem;
+    transition: background 0.3s;
+}
+
+.redeem-btn:hover {
+    background: #218838;
+}
+
+
+
+.charts-section {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.chart-container,
+.impact-summary {
+    background: white;
+    padding: 2rem;
+    border-radius: 15px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+}
+
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.chart-header h3 {
+    color: #333;
+    margin: 0;
+}
+
+.chart-header select {
+    padding: 8px 12px;
+    border: 2px solid #e9ecef;
+    border-radius: 6px;
+    background: white;
+}
+
+.chart-placeholder {
+    height: 200px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.bars {
+    display: flex;
+    align-items: end;
+    justify-content: space-around;
+    height: 150px;
+    gap: 1rem;
+}
+
+.bar {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    border-radius: 4px 4px 0 0;
+    flex: 1;
+    position: relative;
+    min-height: 20px;
+    display: flex;
+    align-items: end;
+    justify-content: center;
+}
+
+.bar-value {
+    position: absolute;
+    top: -25px;
+    color: #333;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+.chart-labels {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.impact-summary h3 {
+    color: #333;
+    margin-bottom: 2rem;
+}
+
+.impact-items {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.impact-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.impact-icon {
+    font-size: 2rem;
+}
+
+.impact-details h4 {
+    margin: 0 0 0.25rem 0;
+    color: #333;
+}
+
+.impact-details p {
+    margin: 0;
+    color: #28a745;
+    font-weight: bold;
+}
+
+.recent-activity {
+    background: white;
+    padding: 2rem;
+    border-radius: 15px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+}
+
+.activity-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.activity-header h3 {
+    color: #333;
+    margin: 0;
+}
+
+.add-report-btn {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: transform 0.3s;
+}
+
+.add-report-btn:hover {
+    transform: translateY(-2px);
+}
+
+.activity-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.activity-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    border-radius: 10px;
+    transition: background 0.3s;
+}
+
+.activity-item:hover {
+    background: #f8f9fa;
+}
+
+.activity-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.activity-icon.resolved {
+    background: #28a745;
+}
+
+.activity-icon.submitted {
+    background: #17a2b8;
+}
+
+.activity-icon.achievement {
+    background: #ffc107;
+}
+
+.activity-details {
+    flex: 1;
+}
+
+.activity-details h4 {
+    margin: 0 0 0.25rem 0;
+    color: #333;
+}
+
+.activity-details p {
+    margin: 0;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.activity-points {
+    color: #28a745;
+    font-weight: bold;
+}
+
+.stat-card.clickable {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.stat-card.clickable:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.stat-card.active {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    border: 2px solid #28a745;
+}
+
+@media (max-width: 768px) {
+    .charts-section {
+        grid-template-columns: 1fr;
+    }
+    
+    .activity-header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+    
+    .stats-overview {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+<script>
+function filterReports(status) {
+    const reportItems = document.querySelectorAll('.activity-item');
+    const statCards = document.querySelectorAll('.stat-card');
+    const activityTitle = document.getElementById('activity-title');
+    const reportsSection = document.querySelector('.recent-activity');
+    
+    // Remove active class from all stat cards
+    statCards.forEach(card => card.classList.remove('active'));
+    
+    // Add active class to clicked card
+    event.target.closest('.stat-card').classList.add('active');
+    
+    // Update title
+    if (status === 'all') {
+        activityTitle.textContent = 'All Your Reports';
+    } else if (status === 'completed') {
+        activityTitle.textContent = 'Completed Reports (Areas Cleaned)';
+    } else if (status === 'pending') {
+        activityTitle.textContent = 'Pending Reports';
+    }
+    
+    // Filter reports
+    reportItems.forEach(item => {
+        if (status === 'all') {
+            item.style.display = 'flex';
+        } else {
+            if (item.dataset.status === status) {
+                item.style.display = 'flex';
+            } else {
+                item.style.display = 'none';
+            }
+        }
+    });
+    
+    // Scroll to reports section
+    reportsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function updateChart(weeks) {
+    fetch('/dashboard/?weeks=' + weeks)
+        .then(response => response.text())
+        .then(html => {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const newBars = doc.getElementById('chartBars').innerHTML;
+            const newLabels = doc.getElementById('chartLabels').innerHTML;
+            
+            document.getElementById('chartBars').innerHTML = newBars;
+            document.getElementById('chartLabels').innerHTML = newLabels;
+        });
+}
+
+function redeemPoints() {
+    window.location.href = '/redeem-points/';
+}
+
+
+</script>
+{% endblock %}

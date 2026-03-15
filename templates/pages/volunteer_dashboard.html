@@ -1,0 +1,778 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Volunteer Dashboard - Trashify{% endblock %}
+
+{% block content %}
+<div class="volunteer-dashboard">
+    <div class="dashboard-header">
+        <div class="container">
+            <h1>Volunteer Dashboard</h1>
+            <p>Lead your community towards a cleaner, greener future</p>
+        </div>
+    </div>
+
+    <div class="dashboard-nav">
+        <div class="container">
+            <div class="nav-cards">
+                <a href="/organize-events/" class="nav-card events-card">
+                    <div class="card-icon">
+                        <i class="fas fa-calendar-plus"></i>
+                    </div>
+                    <h3>Organize Events</h3>
+                    <p>Plan and manage community cleanup drives</p>
+                    <div class="card-arrow">
+                        <i class="fas fa-arrow-right"></i>
+                    </div>
+                </a>
+
+                <a href="/verify-reports/" class="nav-card verify-card">
+                    <div class="card-icon">
+                        <i class="fas fa-clipboard-check"></i>
+                    </div>
+                    <h3>Verify Reports</h3>
+                    <p>Review and validate community waste reports</p>
+                    <div class="card-arrow">
+                        <i class="fas fa-arrow-right"></i>
+                    </div>
+                </a>
+
+                <a href="/community-management/" class="nav-card community-card">
+                    <div class="card-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h3>Community Hub</h3>
+                    <p>Manage volunteers and track progress</p>
+                    <div class="card-arrow">
+                        <i class="fas fa-arrow-right"></i>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="volunteer-stats">
+        <div class="container">
+            <h2>Your Volunteer Impact</h2>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-number">{{ assigned_reports.count }}</div>
+                    <div class="stat-label">Pending Tasks</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">{{ in_progress_reports.count }}</div>
+                    <div class="stat-label">In Progress</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">{{ completed_reports.count }}</div>
+                    <div class="stat-label">Completed Tasks</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">{{ completed_reports.count|add:in_progress_reports.count|add:assigned_reports.count }}</div>
+                    <div class="stat-label">Total Assigned</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Assigned Reports Section -->
+    <div class="assigned-reports">
+        <div class="container">
+            <h2>Assigned Reports</h2>
+            {% if assigned_reports %}
+                <div class="reports-grid">
+                    {% for report in assigned_reports %}
+                    <div class="report-card" data-report-id="{{ report.id }}">
+                        <div class="report-header">
+                            <div class="report-type">
+                                <i class="fas fa-trash"></i>
+                                {{ report.get_waste_type_display }}
+                            </div>
+                            <div class="severity-badge severity-{{ report.severity }}">{{ report.get_severity_display }}</div>
+                        </div>
+                        <div class="report-location">
+                            <i class="fas fa-map-marker-alt"></i>
+                            {{ report.location }}
+                        </div>
+                        <div class="report-description">{{ report.description|truncatechars:100 }}</div>
+                        {% if report.image %}
+                        <div class="report-image">
+                            <img src="{{ report.image }}" alt="Waste Photo" onclick="openImageModal('{{ report.image }}')"/>
+                        </div>
+                        {% endif %}
+                        <div class="report-date">Assigned: {{ report.assigned_at|date:"M d, Y H:i" }}</div>
+                        <div class="report-actions">
+                            <button class="accept-btn" onclick="acceptReport({{ report.id }})">
+                                <i class="fas fa-check"></i> Accept
+                            </button>
+                            <button class="reject-btn" onclick="rejectReport({{ report.id }})">
+                                <i class="fas fa-times"></i> Reject
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="no-reports">
+                    <i class="fas fa-clipboard-list"></i>
+                    <p>No reports assigned to you at the moment.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- In Progress Reports -->
+    {% if in_progress_reports %}
+    <div class="in-progress-reports">
+        <div class="container">
+            <h2>In Progress</h2>
+            <div class="reports-grid">
+                {% for report in in_progress_reports %}
+                <div class="report-card in-progress" data-report-id="{{ report.id }}">
+                    <div class="report-header">
+                        <div class="report-type">
+                            <i class="fas fa-trash"></i>
+                            {{ report.get_waste_type_display }}
+                        </div>
+                        <div class="severity-badge severity-{{ report.severity }}">{{ report.get_severity_display }}</div>
+                    </div>
+                    <div class="report-location">
+                        <i class="fas fa-map-marker-alt"></i>
+                        {{ report.location }}
+                    </div>
+                    <div class="report-description">{{ report.description|truncatechars:100 }}</div>
+                    {% if report.image %}
+                    <div class="report-image">
+                        <img src="{{ report.image }}" alt="Waste Photo" onclick="openImageModal('{{ report.image }}')"/>
+                    </div>
+                    {% endif %}
+                    <div class="report-date">Started: {{ report.assigned_at|date:"M d, Y H:i" }}</div>
+                    <div class="report-actions">
+                        <button class="complete-btn" onclick="completeReport({{ report.id }})">
+                            <i class="fas fa-check-circle"></i> Mark Complete
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="recent-activities">
+        <div class="container">
+            <h2>Recent Activities</h2>
+            <div class="activities-list">
+                {% if completed_reports %}
+                    {% for report in completed_reports|slice:":3" %}
+                    <div class="activity-item">
+                        <div class="activity-icon completed">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="activity-details">
+                            <h4>Completed: {{ report.get_waste_type_display }}</h4>
+                            <p>{{ report.location }} • {{ report.created_at|timesince }} ago</p>
+                        </div>
+                        <div class="activity-status completed">Completed</div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="activity-item">
+                        <div class="activity-icon event">
+                            <i class="fas fa-info-circle"></i>
+                        </div>
+                        <div class="activity-details">
+                            <h4>Welcome to Volunteer Dashboard</h4>
+                            <p>Start accepting assigned reports to see your activities here</p>
+                        </div>
+                        <div class="activity-status new">New</div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.volunteer-dashboard {
+    margin-top: 65px;
+    min-height: calc(100vh - 65px);
+}
+
+.dashboard-header {
+    background: linear-gradient(135deg, #17a2b8, #20c997);
+    color: white;
+    padding: 4rem 0;
+    text-align: center;
+}
+
+.dashboard-header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.dashboard-nav {
+    padding: 4rem 0;
+    background: #f8f9fa;
+}
+
+.nav-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+}
+
+.nav-card {
+    background: white;
+    padding: 2.5rem;
+    border-radius: 15px;
+    text-decoration: none;
+    color: inherit;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.nav-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+}
+
+.nav-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(135deg, #17a2b8, #20c997);
+}
+
+.events-card:hover::before { background: linear-gradient(135deg, #28a745, #20c997); }
+.verify-card:hover::before { background: linear-gradient(135deg, #ffc107, #fd7e14); }
+.community-card:hover::before { background: linear-gradient(135deg, #6f42c1, #e83e8c); }
+
+.card-icon {
+    font-size: 3rem;
+    color: #17a2b8;
+    margin-bottom: 1.5rem;
+}
+
+.nav-card h3 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    color: #333;
+}
+
+.nav-card p {
+    color: #666;
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+}
+
+.card-arrow {
+    position: absolute;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    font-size: 1.2rem;
+    color: #17a2b8;
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+.nav-card:hover .card-arrow {
+    opacity: 1;
+    transform: translateX(5px);
+}
+
+.volunteer-stats {
+    padding: 4rem 0;
+    background: white;
+}
+
+.volunteer-stats h2 {
+    text-align: center;
+    font-size: 2rem;
+    margin-bottom: 3rem;
+    color: #333;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 2rem;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 2rem;
+    background: #f8f9fa;
+    border-radius: 15px;
+    transition: transform 0.3s ease;
+}
+
+.stat-item:hover {
+    transform: translateY(-5px);
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #17a2b8;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    color: #666;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.recent-activities {
+    padding: 4rem 0;
+    background: #f8f9fa;
+}
+
+.recent-activities h2 {
+    text-align: center;
+    font-size: 2rem;
+    margin-bottom: 3rem;
+    color: #333;
+}
+
+.activities-list {
+    background: white;
+    border-radius: 15px;
+    padding: 2rem;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+}
+
+.activity-item {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1.5rem;
+    border-radius: 10px;
+    margin-bottom: 1rem;
+    transition: background 0.3s;
+}
+
+.activity-item:hover {
+    background: #f8f9fa;
+}
+
+.activity-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.2rem;
+}
+
+.activity-icon.event {
+    background: #28a745;
+}
+
+.activity-icon.verify {
+    background: #ffc107;
+}
+
+.activity-icon.community {
+    background: #6f42c1;
+}
+
+.activity-details {
+    flex: 1;
+}
+
+.activity-details h4 {
+    margin: 0 0 0.5rem 0;
+    color: #333;
+    font-size: 1.1rem;
+}
+
+.activity-details p {
+    margin: 0;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.activity-status {
+    padding: 6px 12px;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.activity-status.upcoming {
+    background: #e3f2fd;
+    color: #1976d2;
+}
+
+.activity-status.completed {
+    background: #e8f5e8;
+    color: #2e7d32;
+}
+
+.activity-status.new {
+    background: #fff3e0;
+    color: #f57c00;
+}
+
+/* Assigned Reports Styles */
+.assigned-reports, .in-progress-reports {
+    padding: 4rem 0;
+    background: white;
+}
+
+.assigned-reports h2, .in-progress-reports h2 {
+    text-align: center;
+    font-size: 2rem;
+    margin-bottom: 3rem;
+    color: #333;
+}
+
+.reports-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 2rem;
+}
+
+.report-card {
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 15px;
+    padding: 1.5rem;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+}
+
+.report-card:hover {
+    transform: translateY(-5px);
+}
+
+.report-card.in-progress {
+    border-left: 4px solid #ffc107;
+}
+
+.report-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.report-type {
+    font-weight: 600;
+    color: #333;
+}
+
+.report-type i {
+    color: #28a745;
+    margin-right: 0.5rem;
+}
+
+.severity-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.severity-low {
+    background: #d4edda;
+    color: #155724;
+}
+
+.severity-medium {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.severity-high {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.report-location {
+    color: #666;
+    margin-bottom: 1rem;
+}
+
+.report-location i {
+    color: #dc3545;
+    margin-right: 0.5rem;
+}
+
+.report-description {
+    color: #555;
+    margin-bottom: 1rem;
+    line-height: 1.4;
+}
+
+.report-date {
+    color: #888;
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+}
+
+.report-actions {
+    display: flex;
+    gap: 1rem;
+}
+
+.accept-btn, .reject-btn, .complete-btn {
+    flex: 1;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.accept-btn {
+    background: #28a745;
+    color: white;
+}
+
+.accept-btn:hover {
+    background: #218838;
+}
+
+.reject-btn {
+    background: #dc3545;
+    color: white;
+}
+
+.reject-btn:hover {
+    background: #c82333;
+}
+
+.complete-btn {
+    background: #17a2b8;
+    color: white;
+}
+
+.complete-btn:hover {
+    background: #138496;
+}
+
+.no-reports {
+    text-align: center;
+    padding: 3rem;
+    color: #666;
+}
+
+.no-reports i {
+    font-size: 3rem;
+    color: #dee2e6;
+    margin-bottom: 1rem;
+}
+
+.activity-icon.completed {
+    background: #28a745;
+}
+
+.report-image {
+    margin: 1rem 0;
+}
+
+.report-image img {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.3s;
+}
+
+.report-image img:hover {
+    transform: scale(1.05);
+}
+
+.image-modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.8);
+}
+
+.modal-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    max-width: 90%;
+    max-height: 90%;
+}
+
+.modal-content img {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+}
+
+.close-modal {
+    position: absolute;
+    top: 15px;
+    right: 35px;
+    color: white;
+    font-size: 40px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close-modal:hover {
+    opacity: 0.7;
+}
+
+@media (max-width: 768px) {
+    .dashboard-header h1 {
+        font-size: 2rem;
+    }
+    
+    .nav-cards {
+        grid-template-columns: 1fr;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .activity-item {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+    }
+    
+    .reports-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .report-actions {
+        flex-direction: column;
+    }
+}
+</style>
+
+<!-- Image Modal -->
+<div id="imageModal" class="image-modal">
+    <span class="close-modal" onclick="closeImageModal()">&times;</span>
+    <div class="modal-content">
+        <img id="modalImage" src="" alt="Waste Photo">
+    </div>
+</div>
+
+<script>
+function acceptReport(reportId) {
+    if (confirm('Are you sure you want to accept this cleanup task?')) {
+        fetch('/accept-report/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                report_id: reportId
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while accepting the report.');
+        });
+    }
+}
+
+function rejectReport(reportId) {
+    if (confirm('Are you sure you want to reject this cleanup task? It will be returned to the pending queue.')) {
+        fetch('/reject-report/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                report_id: reportId
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while rejecting the report.');
+        });
+    }
+}
+
+function completeReport(reportId) {
+    if (confirm('Are you sure you want to mark this cleanup task as completed?')) {
+        fetch('/complete-report/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                report_id: reportId
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while completing the report.');
+        });
+    }
+}
+
+function openImageModal(imageSrc) {
+    const modal = document.getElementById('imageModal');
+    const modalImg = document.getElementById('modalImage');
+    modal.style.display = 'block';
+    modalImg.src = imageSrc;
+}
+
+function closeImageModal() {
+    document.getElementById('imageModal').style.display = 'none';
+}
+
+window.onclick = function(event) {
+    const modal = document.getElementById('imageModal');
+    if (event.target == modal) {
+        modal.style.display = 'none';
+    }
+}
+</script>
+{% endblock %}

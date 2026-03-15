@@ -1,0 +1,250 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}User Dashboard - Trashify{% endblock %}
+
+{% block content %}
+<div class="user-dashboard">
+    <div class="dashboard-header">
+        <div class="container">
+            <h1>Welcome to Your Dashboard</h1>
+            <p>Track your environmental impact and contribute to a cleaner future</p>
+        </div>
+    </div>
+
+    <div class="dashboard-nav">
+        <div class="container">
+            <div class="nav-cards">
+                <a href="/report-waste/" class="nav-card report-card">
+                    <div class="card-icon">
+                        <i class="fas fa-camera"></i>
+                    </div>
+                    <h3>Report Waste</h3>
+                    <p>Take a photo and report waste issues in your area</p>
+                    <div class="card-arrow">
+                        <i class="fas fa-arrow-right"></i>
+                    </div>
+                </a>
+
+                <a href="/leaderboard/" class="nav-card leaderboard-card">
+                    <div class="card-icon">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    <h3>Leaderboard</h3>
+                    <p>See top contributors and your ranking</p>
+                    <div class="card-arrow">
+                        <i class="fas fa-arrow-right"></i>
+                    </div>
+                </a>
+
+                <a href="/dashboard/" class="nav-card dashboard-card">
+                    <div class="card-icon">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <h3>Analytics</h3>
+                    <p>View your stats and environmental impact</p>
+                    <div class="card-arrow">
+                        <i class="fas fa-arrow-right"></i>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="quick-stats">
+        <div class="container">
+            <h2>Your Impact</h2>
+            <div class="stats-grid">
+                <div class="stat-item clickable" onclick="showUserReports('all')">
+                    <div class="stat-number">{{ total_reports }}</div>
+                    <div class="stat-label">Reports Submitted</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">{{ points }}</div>
+                    <div class="stat-label">Points Earned</div>
+                </div>
+                <div class="stat-item clickable" onclick="showUserReports('completed')">
+                    <div class="stat-number">{{ completed_reports }}</div>
+                    <div class="stat-label">Areas Cleaned</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">#{{ user_rank|default:"N/A" }}</div>
+                    <div class="stat-label">Your Rank</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.user-dashboard {
+    margin-top: 65px;
+    min-height: calc(100vh - 65px);
+}
+
+.dashboard-header {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+    padding: 4rem 0;
+    text-align: center;
+}
+
+.dashboard-header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.dashboard-nav {
+    padding: 4rem 0;
+    background: #f8f9fa;
+}
+
+.nav-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+}
+
+.nav-card {
+    background: white;
+    padding: 2.5rem;
+    border-radius: 15px;
+    text-decoration: none;
+    color: inherit;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.nav-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+}
+
+.nav-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(135deg, #28a745, #20c997);
+}
+
+.report-card:hover::before { background: linear-gradient(135deg, #28a745, #20c997); }
+.leaderboard-card:hover::before { background: linear-gradient(135deg, #ffc107, #fd7e14); }
+.dashboard-card:hover::before { background: linear-gradient(135deg, #17a2b8, #6f42c1); }
+
+.card-icon {
+    font-size: 3rem;
+    color: #28a745;
+    margin-bottom: 1.5rem;
+}
+
+.nav-card h3 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    color: #333;
+}
+
+.nav-card p {
+    color: #666;
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+}
+
+.card-arrow {
+    position: absolute;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    font-size: 1.2rem;
+    color: #28a745;
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+.nav-card:hover .card-arrow {
+    opacity: 1;
+    transform: translateX(5px);
+}
+
+.quick-stats {
+    padding: 4rem 0;
+    background: white;
+}
+
+.quick-stats h2 {
+    text-align: center;
+    font-size: 2rem;
+    margin-bottom: 3rem;
+    color: #333;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 2rem;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 2rem;
+    background: #f8f9fa;
+    border-radius: 15px;
+    transition: transform 0.3s ease;
+}
+
+.stat-item:hover {
+    transform: translateY(-5px);
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #28a745;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    color: #666;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stat-item.clickable {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.stat-item.clickable:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+@media (max-width: 768px) {
+    .dashboard-header h1 {
+        font-size: 2rem;
+    }
+    
+    .nav-cards {
+        grid-template-columns: 1fr;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+</style>
+
+<script>
+function showUserReports(type) {
+    if (type === 'all') {
+        window.location.href = '/dashboard/';
+    } else if (type === 'completed') {
+        window.location.href = '/dashboard/?filter=completed';
+    }
+}
+</script>
+{% endblock %}

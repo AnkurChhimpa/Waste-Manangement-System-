@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Admin Dashboard - Simple{% endblock %}
+
+{% block content %}
+<div style="margin-top: 80px; padding: 2rem;">
+    <h1>Admin Dashboard - Debug Version</h1>
+    
+    <div style="background: #f8f9fa; padding: 1rem; margin: 1rem 0; border-radius: 8px;">
+        <h3>Debug Information</h3>
+        <p><strong>User:</strong> {{ user.username }} (Superuser: {{ user.is_superuser }})</p>
+        <p><strong>Total Users:</strong> {{ users.count }}</p>
+        <p><strong>Total Reports:</strong> {{ reports.count }}</p>
+        <p><strong>Crew Members:</strong> {{ crew_members.count }}</p>
+        <p><strong>Volunteers:</strong> {{ volunteers.count }}</p>
+    </div>
+
+    <div style="background: white; padding: 1rem; margin: 1rem 0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+        <h3>Statistics</h3>
+        <ul>
+            <li>Total Reports: {{ total_reports }}</li>
+            <li>Pending Reports: {{ pending_reports }}</li>
+            <li>In Progress Reports: {{ in_progress_reports }}</li>
+            <li>Completed Reports: {{ completed_reports }}</li>
+            <li>Resolution Rate: {{ resolution_rate }}%</li>
+        </ul>
+    </div>
+
+    <div style="background: white; padding: 1rem; margin: 1rem 0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+        <h3>Crew Members ({{ crew_members.count }})</h3>
+        {% if crew_members %}
+            <ul>
+            {% for crew in crew_members %}
+                <li>{{ crew.username }} - ID: {{ crew.crewmember.employee_id }} (Active: {{ crew.crewmember.is_active }})</li>
+            {% endfor %}
+            </ul>
+        {% else %}
+            <p>No crew members found.</p>
+        {% endif %}
+    </div>
+
+    <div style="background: white; padding: 1rem; margin: 1rem 0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+        <h3>Recent Reports ({{ reports.count }})</h3>
+        {% if reports %}
+            {% for report in reports %}
+            <div style="border: 1px solid #ddd; padding: 1rem; margin: 0.5rem 0; border-radius: 4px;">
+                <h4>{{ report.get_waste_type_display }} - {{ report.get_severity_display }} Priority</h4>
+                <p><strong>Location:</strong> {{ report.location }}</p>
+                <p><strong>Status:</strong> {{ report.status }}</p>
+                <p><strong>Created:</strong> {{ report.created_at|timesince }} ago</p>
+                {% if report.assigned_volunteer %}
+                <p><strong>Assigned to:</strong> {{ report.assigned_volunteer.username }}</p>
+                {% endif %}
+                
+                {% if report.status == 'pending' %}
+                <div style="margin-top: 1rem;">
+                    <label>Assign to:</label>
+                    <select id="assignee-{{ report.id }}" style="margin: 0.5rem;">
+                        <option value="">Select Assignee</option>
+                        {% if crew_members %}
+                        <optgroup label="Crew Members">
+                            {% for crew in crew_members %}
+                            <option value="{{ crew.id }}" data-type="crew">{{ crew.username }} (Crew - {{ crew.crewmember.employee_id }})</option>
+                            {% endfor %}
+                        </optgroup>
+                        {% endif %}
+                        <optgroup label="Volunteers">
+                            {% for volunteer in volunteers %}
+                            {% if not volunteer.crewmember %}
+                            <option value="{{ volunteer.id }}" data-type="volunteer">{{ volunteer.username }} (Volunteer)</option>
+                            {% endif %}
+                            {% endfor %}
+                        </optgroup>
+                    </select>
+                    <button onclick="simpleAssign({{ report.id }})" style="padding: 0.5rem 1rem; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                        Assign
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        {% else %}
+            <p>No reports found.</p>
+        {% endif %}
+    </div>
+
+    <div style="margin-top: 2rem;">
+        <a href="/admin-crew/" style="display: inline-block; padding: 1rem 2rem; background: #dc3545; color: white; text-decoration: none; border-radius: 8px; margin-right: 1rem;">
+            Manage Crew Members
+        </a>
+        <a href="/admin-event-participants/" style="display: inline-block; padding: 1rem 2rem; background: #17a2b8; color: white; text-decoration: none; border-radius: 8px;">
+            Event Participants
+        </a>
+    </div>
+</div>
+
+<script>
+function simpleAssign(reportId) {
+    const selectElement = document.getElementById('assignee-' + reportId);
+    const assigneeId = selectElement.value;
+    
+    if (!assigneeId) {
+        alert('Please select an assignee first.');
+        return;
+    }
+    
+    const selectedOption = selectElement.options[selectElement.selectedIndex];
+    const assigneeType = selectedOption.getAttribute('data-type');
+    const assigneeName = selectedOption.text;
+    
+    console.log('Simple assignment:', {
+        reportId: reportId,
+        assigneeId: assigneeId,
+        assigneeType: assigneeType,
+        assigneeName: assigneeName
+    });
+    
+    if (confirm('Assign to ' + assigneeName + '?')) {
+        fetch('/assign-volunteer/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                report_id: reportId,
+                volunteer_id: assigneeId,
+                assignee_type: assigneeType
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Assignment response:', data);
+            if (data.success) {
+                alert('Success: ' + data.message);
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Assignment error:', error);
+            alert('Network error: ' + error);
+        });
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Mission - Trashify{% endblock %}
+
+{% block content %}
+<div class="about-page">
+    <div class="about-hero">
+        <div class="container">
+            <h1>Our Mission</h1>
+            <p>Creating a Cleaner, Greener Future</p>
+        </div>
+    </div>
+    
+    <div class="about-content">
+        <div class="container">
+            <div class="content-grid">
+                <div class="content-text">
+                    <h2>Creating a Cleaner, Greener Future</h2>
+                    <p>Our mission is to make the world a cleaner, greener, and better place to live in while giving citizens and volunteers a healthy chance to contribute towards the same. We believe that every small effort counts, and when combined, these efforts can lead to a lasting positive impact on our environment and communities.</p>
+                    
+                    <h3>Our Core Values</h3>
+                    <ul>
+                        <li><strong>Community First:</strong> Empowering citizens and volunteers to take action together.</li>
+                        <li><strong>Environmental Responsibility:</strong> Ensuring every step moves us toward a cleaner, greener planet.</li>
+                        <li><strong>Innovation:</strong> Using AI and modern technology to make waste management efficient and impactful.</li>
+                        <li><strong>Transparency:</strong> Building trust with open communication and accountability.</li>
+                        <li><strong>Collaboration:</strong> Working hand-in-hand with communities, volunteers, and organizations to achieve shared goals.</li>
+                    </ul>
+                    
+                    <h3>What We Do</h3>
+                    <ul>
+                        <li>Provide an easy-to-use platform for citizens to report and track waste.</li>
+                        <li>Enable and support volunteers in community clean-up activities.</li>
+                        <li>Leverage AI to identify, classify, and manage waste effectively.</li>
+                        <li>Recognize and reward contributions from citizens and volunteers to keep motivation high.</li>
+                        <li>Spread awareness about sustainable practices for a greener tomorrow.</li>
+                    </ul>
+                </div>
+                
+                <img src="{% static 'images/earth2.avif' %}" alt="Earth" style="width: 300px; height: 300px; object-fit: cover; border: none; outline: none; box-shadow: none;">
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.earth-3d {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 300px;
+}
+
+.earth-sphere {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    position: relative;
+    background: linear-gradient(45deg, #1e3c72, #2a5298);
+    box-shadow: 0 0 50px rgba(30, 60, 114, 0.5), inset -20px -20px 50px rgba(0,0,0,0.3);
+    animation: rotate 20s linear infinite;
+}
+
+.earth-surface {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #4CAF50, #2E7D32, #1B5E20);
+    position: absolute;
+    top: 0;
+    left: 0;
+    opacity: 0.8;
+}
+
+.earth-clouds {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: radial-gradient(circle at 60% 40%, rgba(255,255,255,0.3), transparent 50%);
+    position: absolute;
+    top: 0;
+    left: 0;
+    animation: rotate 30s linear infinite reverse;
+}
+
+@keyframes earthRotate {
+    from { transform: rotateY(0deg) rotateX(10deg); }
+    to { transform: rotateY(360deg) rotateX(10deg); }
+}
+</style>
+
+{% endblock %}

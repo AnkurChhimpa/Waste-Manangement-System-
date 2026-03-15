@@ -1,0 +1,1743 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Admin Dashboard - Trashify{% endblock %}
+
+{% block content %}
+<div class="admin-dashboard">
+    <div class="dashboard-header">
+        <div class="container">
+            <h1>Admin Dashboard</h1>
+            <p>Manage platform operations and monitor system health</p>
+        </div>
+    </div>
+
+    <div class="dashboard-nav">
+        <div class="container">
+            <div class="nav-cards">
+                <a href="/admin-users/" class="nav-card users-card">
+                    <div class="card-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h3>User Management</h3>
+                    <p>View and manage all registered users</p>
+                    <div class="card-stat">{{ users.count }} users</div>
+                </a>
+
+                <a href="/admin-reports/" class="nav-card reports-card">
+                    <div class="card-icon">
+                        <i class="fas fa-clipboard-list"></i>
+                    </div>
+                    <h3>Reports Management</h3>
+                    <p>Monitor and update report statuses</p>
+                    <div class="card-stat">{{ reports.count }} reports</div>
+                </a>
+
+                <a href="/admin-crew/" class="nav-card crew-card">
+                    <div class="card-icon">
+                        <i class="fas fa-users-cog"></i>
+                    </div>
+                    <h3>Crew Management</h3>
+                    <p>Manage crew members and access</p>
+                    <div class="card-stat">{{ crew_members.count }} crew members</div>
+                </a>
+
+                <a href="/organize-events/" class="nav-card events-card">
+                    <div class="card-icon">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <h3>Event Management</h3>
+                    <p>Create and manage volunteer events</p>
+                    <div class="card-stat">{{ total_events }} events</div>
+                    <button class="create-event-btn" onclick="event.preventDefault(); showCreateEventModal()">
+                        <i class="fas fa-plus"></i> Create New Event
+                    </button>
+                </a>
+
+                <a href="/admin-event-participants/" class="nav-card participants-card">
+                    <div class="card-icon">
+                        <i class="fas fa-user-check"></i>
+                    </div>
+                    <h3>Event Participants</h3>
+                    <p>Review volunteer applications</p>
+                    <div class="card-stat">{{ total_participants }} applications</div>
+                </a>
+
+                <a href="/system-analytics/" class="nav-card analytics-card">
+                    <div class="card-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3>System Analytics</h3>
+                    <p>View platform statistics and insights</p>
+                    <div class="card-stat">{{ resolution_rate }}% resolved</div>
+                </a>
+
+                <a href="#contact-messages" class="nav-card messages-card" onclick="scrollToMessages(event)">
+                    <div class="card-icon">
+                        <i class="fas fa-envelope"></i>
+                    </div>
+                    <h3>Contact Messages</h3>
+                    <p>View user inquiries and support requests</p>
+                    <div class="card-stat">{{ contact_messages.count }} messages</div>
+                    {% if unread_messages > 0 %}
+                    <div class="unread-badge">{{ unread_messages }} unread</div>
+                    {% endif %}
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="admin-stats">
+        <div class="container">
+            <h2>Platform Overview</h2>
+            <div class="stats-grid">
+                <a href="/admin-users/" class="stat-item clickable">
+                    <div class="stat-number">{{ users.count }}</div>
+                    <div class="stat-label">Total Users</div>
+                    <div class="stat-trend positive">+12 this week</div>
+                </a>
+                <a href="/admin-reports/" class="stat-item clickable">
+                    <div class="stat-number">{{ total_reports }}</div>
+                    <div class="stat-label">Total Reports</div>
+                    <div class="stat-trend positive">All time</div>
+                </a>
+                <div class="stat-item">
+                    <div class="stat-number">{{ pending_reports }}</div>
+                    <div class="stat-label">Pending Reports</div>
+                    <div class="stat-trend neutral">Awaiting assignment</div>
+                </div>
+                <a href="#" class="stat-item clickable" onclick="showAnalytics()">
+                    <div class="stat-number">{{ resolution_rate }}%</div>
+                    <div class="stat-label">Resolution Rate</div>
+                    <div class="stat-trend positive">{{ completed_reports }} completed</div>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="contact-messages-section" id="contact-messages">
+        <div class="container">
+            <h2>Recent Contact Messages</h2>
+            
+            <!-- Messages Search and Filter -->
+            <div class="search-filter-section">
+                <div class="search-bar-container">
+                    <input type="text" id="messageSearch" placeholder="Search messages by name, email, or subject..." class="search-input">
+                    <i class="fas fa-search search-icon"></i>
+                </div>
+                <div class="filter-container">
+                    <select id="readStatusFilter" class="filter-select">
+                        <option value="">All Messages</option>
+                        <option value="unread">Unread Only</option>
+                        <option value="read">Read Only</option>
+                    </select>
+                    <button id="clearMessageFilters" class="clear-filters-btn">Clear Filters</button>
+                </div>
+            </div>
+            
+            <div class="messages-list" id="messagesList">
+                {% for message in contact_messages %}
+                <div class="message-item {% if not message.is_read %}unread{% endif %}">
+                    <div class="message-icon">
+                        <i class="fas fa-envelope{% if not message.is_read %}-open{% endif %}"></i>
+                    </div>
+                    <div class="message-details">
+                        <h4>{{ message.subject }}</h4>
+                        <p><strong>From:</strong> {{ message.name }} ({{ message.email }})</p>
+                        <p>{{ message.message|truncatewords:20 }}</p>
+                        <small>{{ message.created_at|timesince }} ago</small>
+                    </div>
+                    <div class="message-actions">
+                        {% if not message.is_read %}
+                        <button class="mark-read-btn" onclick="markAsRead({{ message.id }})">
+                            <i class="fas fa-check"></i> Mark Read
+                        </button>
+                        {% else %}
+                        <span class="read-status"><i class="fas fa-check-circle"></i> Read</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <div class="message-item">
+                    <div class="message-icon">
+                        <i class="fas fa-info-circle"></i>
+                    </div>
+                    <div class="message-details">
+                        <h4>No messages yet</h4>
+                        <p>No contact messages have been received.</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="recent-activity">
+        <div class="container">
+            <h2>Latest Waste Reports</h2>
+            
+            <!-- Search and Filter Section -->
+            <div class="search-filter-section">
+                <div class="search-bar-container">
+                    <input type="text" id="reportSearch" placeholder="Search reports by location, description, or user..." class="search-input">
+                    <i class="fas fa-search search-icon"></i>
+                </div>
+                <div class="filter-container">
+                    <select id="wasteTypeFilter" class="filter-select">
+                        <option value="">All Waste Types</option>
+                        <option value="plastic">Plastic Waste</option>
+                        <option value="organic">Organic Waste</option>
+                        <option value="electronic">Electronic Waste</option>
+                        <option value="hazardous">Hazardous Waste</option>
+                        <option value="construction">Construction Debris</option>
+                        <option value="other">Other</option>
+                    </select>
+                    <select id="severityFilter" class="filter-select">
+                        <option value="">All Severities</option>
+                        <option value="low">Low</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">High</option>
+                    </select>
+                    <select id="statusFilter" class="filter-select">
+                        <option value="">All Statuses</option>
+                        <option value="pending">Pending</option>
+                        <option value="assigned">Assigned</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="completed">Completed</option>
+                    </select>
+                    <button id="clearFilters" class="clear-filters-btn">Clear Filters</button>
+                </div>
+            </div>
+            
+            <div class="activity-list" id="reportsList">
+                {% for report in reports %}
+                <div class="activity-item">
+                    <div class="activity-icon report">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div class="activity-details">
+                        <h4>{{ report.get_waste_type_display }} - {{ report.get_severity_display }} Priority</h4>
+                        <p>{{ report.location }} • {{ report.created_at|timesince }} ago</p>
+                        {% if report.description %}
+                        <p><small>{{ report.description|truncatewords:10 }}</small></p>
+                        {% endif %}
+                        {% if report.assigned_volunteer %}
+                        <p><small><strong>Assigned to:</strong> {{ report.assigned_volunteer.username }}</small></p>
+                        {% endif %}
+                        <div class="report-images-section">
+                            {% if report.image %}
+                            <div class="report-image original">
+                                <img src="{{ report.image }}" alt="Original Report" onclick="openImageModal('{{ report.image }}')"/>
+                                <div class="image-label">Original Report</div>
+                                {% if report.photo_timestamp %}
+                                <div class="photo-timestamp">
+                                    <i class="fas fa-clock"></i> {{ report.photo_timestamp }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                            <div class="status-images" id="statusImages{{ report.id }}">
+                                <!-- Before/After images will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                    <div class="assignment-controls">
+                        {% if report.status == 'pending' %}
+                        <select class="assignee-select" data-report-id="{{ report.id }}" size="5">
+                            <option value="">Select Assignee</option>
+                            {% if crew_members %}
+                            <optgroup label="🔧 Crew Members ({{ crew_members.count }})">
+                                {% for crew in crew_members %}
+                                <option value="{{ crew.id }}" data-type="crew">{{ crew.username }} - ID: {{ crew.crewmember.employee_id }}</option>
+                                {% endfor %}
+                            </optgroup>
+                            {% else %}
+                            <optgroup label="🔧 Crew Members">
+                                <option disabled>No crew members available</option>
+                            </optgroup>
+                            {% endif %}
+                            <optgroup label="👥 Volunteers">
+                                {% for volunteer in volunteers %}
+                                {% if not volunteer.crewmember %}
+                                <option value="{{ volunteer.id }}" data-type="volunteer">{{ volunteer.username }} (Volunteer)</option>
+                                {% endif %}
+                                {% endfor %}
+                            </optgroup>
+                        </select>
+                        <button class="assign-btn" onclick="assignTask({{ report.id }})">
+                            <i class="fas fa-user-plus"></i> Assign Task
+                        </button>
+                        <!-- Debug info -->
+                        <div style="font-size: 0.7rem; color: #666; margin-top: 0.5rem;">
+                            Debug: {{ crew_members.count }} crew members, {{ volunteers.count }} volunteers
+                        </div>
+                        {% elif report.status == 'assigned' %}
+                        <div class="activity-status assigned">
+                            <i class="fas fa-user-check"></i> Assigned
+                            <small>to {{ report.assigned_volunteer.username }}</small>
+                        </div>
+                        {% elif report.status == 'in_progress' %}
+                        <div class="activity-status in-progress" style="min-width: 120px; padding: 12px 16px; display: block; text-align: center;">
+                            <i class="fas fa-cog fa-spin"></i> In Progress
+                            <small style="display: block; margin-top: 4px;">by {{ report.assigned_volunteer.username }}</small>
+                        </div>
+                        {% elif report.status == 'completed' %}
+                        <div class="activity-status completed">
+                            <i class="fas fa-check-circle"></i> Completed
+                            <small>by {{ report.assigned_volunteer.username }}</small>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <div class="activity-item">
+                    <div class="activity-icon report">
+                        <i class="fas fa-info-circle"></i>
+                    </div>
+                    <div class="activity-details">
+                        <h4>No reports yet</h4>
+                        <p>No waste reports have been submitted yet.</p>
+                    </div>
+                    <div class="activity-status new">Empty</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Image Modal -->
+<div id="imageModal" class="image-modal">
+    <span class="close-modal" onclick="closeImageModal()">&times;</span>
+    <div class="modal-content">
+        <img id="modalImage" src="" alt="Waste Photo">
+    </div>
+</div>
+
+<!-- Create Event Modal -->
+<div id="createEventModal" class="create-event-modal">
+    <div class="modal-content-form">
+        <span class="close-modal" onclick="closeCreateEventModal()">&times;</span>
+        <h2>Create New Event</h2>
+        <form id="createEventForm">
+            <div class="form-group">
+                <label for="eventTitle">Event Title</label>
+                <input type="text" id="eventTitle" name="title" required>
+            </div>
+            <div class="form-group">
+                <label for="eventType">Event Type</label>
+                <select id="eventType" name="event_type" required>
+                    <option value="cleanup">Cleanup Drive</option>
+                    <option value="awareness">Awareness Campaign</option>
+                    <option value="workshop">Workshop</option>
+                    <option value="tree_planting">Tree Planting</option>
+                    <option value="recycling">Recycling Drive</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="eventLocation">Location</label>
+                <input type="text" id="eventLocation" name="location" required>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="eventDate">Date</label>
+                    <input type="date" id="eventDate" name="date" required>
+                </div>
+                <div class="form-group">
+                    <label for="eventTime">Time</label>
+                    <input type="time" id="eventTime" name="time" required>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="maxParticipants">Max Participants</label>
+                <input type="number" id="maxParticipants" name="max_participants" value="50" min="1" required>
+            </div>
+            <div class="form-group">
+                <label for="eventDescription">Description</label>
+                <textarea id="eventDescription" name="description" rows="4"></textarea>
+            </div>
+            <div class="form-actions">
+                <button type="button" onclick="closeCreateEventModal()">Cancel</button>
+                <button type="submit">Create Event</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.admin-dashboard {
+    margin-top: 70px;
+    min-height: calc(100vh - 70px);
+    padding-top: 10px;
+}
+
+.dashboard-header {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    color: white;
+    padding: 4rem 0;
+    text-align: center;
+}
+
+.dashboard-header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.dashboard-nav {
+    padding: 4rem 0;
+    background: #f8f9fa;
+}
+
+.nav-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+}
+
+.nav-card {
+    background: white;
+    padding: 2.5rem;
+    border-radius: 15px;
+    text-decoration: none;
+    color: inherit;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.nav-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+}
+
+.nav-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+}
+
+.card-icon {
+    font-size: 3rem;
+    color: #22c55e;
+    margin-bottom: 1.5rem;
+}
+
+.nav-card h3 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    color: #333;
+}
+
+.nav-card p {
+    color: #666;
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+}
+
+.card-stat {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #22c55e;
+}
+
+.admin-stats {
+    padding: 4rem 0;
+    background: white;
+}
+
+.admin-stats h2 {
+    text-align: center;
+    font-size: 2rem;
+    margin-bottom: 3rem;
+    color: #333;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 2rem;
+    background: #f8f9fa;
+    border-radius: 15px;
+    transition: transform 0.3s ease;
+}
+
+.stat-item:hover {
+    transform: translateY(-5px);
+}
+
+.stat-item.clickable {
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
+}
+
+.stat-item.clickable:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #22c55e;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    color: #666;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+}
+
+.stat-trend {
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.stat-trend.positive { color: #28a745; }
+.stat-trend.neutral { color: #6c757d; }
+
+.recent-activity {
+    padding: 4rem 0;
+    background: #f8f9fa;
+}
+
+.recent-activity h2 {
+    text-align: center;
+    font-size: 2rem;
+    margin-bottom: 3rem;
+    color: #333;
+}
+
+.activity-list {
+    background: white;
+    border-radius: 15px;
+    padding: 2rem;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+}
+
+.activity-item {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1.5rem;
+    border-radius: 10px;
+    margin-bottom: 1rem;
+    transition: background 0.3s;
+}
+
+.activity-item:hover {
+    background: #f8f9fa;
+}
+
+.activity-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.2rem;
+}
+
+.activity-icon.user { background: #17a2b8; }
+.activity-icon.report { background: #ffc107; }
+.activity-icon.resolved { background: #28a745; }
+.activity-icon.event { background: #6f42c1; }
+
+.activity-details {
+    flex: 1;
+}
+
+.activity-details h4 {
+    margin: 0 0 0.5rem 0;
+    color: #333;
+    font-size: 1.1rem;
+}
+
+.activity-details p {
+    margin: 0;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+
+
+.activity-status.new { background: #e3f2fd; color: #1976d2; }
+.activity-status.urgent { background: #ffebee; color: #c62828; }
+.activity-status.resolved { background: #e8f5e8; color: #2e7d32; }
+.activity-status.scheduled { background: #f3e5f5; color: #7b1fa2; }
+.activity-status.assigned { background: #fff3cd; color: #856404; }
+.activity-status.in-progress { background: #cce5ff; color: #0056b3; min-width: 120px; padding: 8px 16px; }
+.activity-status.completed { background: #e8f5e8; color: #2e7d32; }
+
+.assignment-controls {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.assignee-select {
+    padding: 6px 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    min-width: 200px;
+}
+
+.volunteer-select {
+    padding: 6px 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.assign-btn {
+    padding: 6px 12px;
+    background: #28a745;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: background 0.3s;
+}
+
+.assign-btn:hover:not(:disabled) {
+    background: #218838;
+}
+
+.assign-btn:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.assignment-controls {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    min-width: 300px;
+}
+
+.report-image {
+    margin-top: 0.5rem;
+}
+
+.report-image img {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.3s;
+}
+
+.report-image img:hover {
+    transform: scale(1.1);
+}
+
+.photo-timestamp {
+    font-size: 0.75rem;
+    color: #666;
+    margin-top: 0.25rem;
+    text-align: center;
+}
+
+.photo-timestamp i {
+    margin-right: 0.25rem;
+    color: #28a745;
+}
+
+.report-images-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.report-image.original {
+    text-align: center;
+}
+
+.report-image.original img {
+    max-width: 200px;
+    max-height: 150px;
+    object-fit: cover;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.3s;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.report-image.original img:hover {
+    transform: scale(1.05);
+}
+
+.image-label {
+    font-size: 0.8rem;
+    color: #333;
+    font-weight: 600;
+    margin-top: 0.5rem;
+}
+
+.status-images {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    padding: 0.5rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    min-height: 60px;
+    align-items: center;
+}
+
+.status-image {
+    text-align: center;
+}
+
+.status-image img {
+    width: 100px;
+    height: 75px;
+    object-fit: cover;
+    border-radius: 6px;
+    cursor: pointer;
+    border: 2px solid #28a745;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: transform 0.3s;
+}
+
+.status-image img:hover {
+    transform: scale(1.1);
+}
+
+.status-image .image-type {
+    font-size: 0.7rem;
+    color: #28a745;
+    font-weight: 600;
+    margin-top: 0.25rem;
+}
+
+.no-status-images {
+    color: #666;
+    font-style: italic;
+    font-size: 0.8rem;
+    text-align: center;
+    width: 100%;
+}
+
+.activity-status {
+    padding: 6px 12px;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    min-width: 100px;
+    text-align: center;
+}
+
+.activity-status small {
+    font-size: 0.7rem;
+    opacity: 0.8;
+}
+
+.image-modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.8);
+}
+
+.modal-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    max-width: 90%;
+    max-height: 90%;
+}
+
+.modal-content img {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+}
+
+.close-modal {
+    position: absolute;
+    top: 15px;
+    right: 35px;
+    color: white;
+    font-size: 40px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close-modal:hover {
+    opacity: 0.7;
+}
+
+.create-event-btn {
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    margin-top: 1rem;
+    transition: background 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    justify-content: center;
+}
+
+.create-event-btn:hover {
+    background: #218838;
+}
+
+.create-event-modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+}
+
+.modal-content-form {
+    background: white;
+    margin: 5% auto;
+    padding: 2rem;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 500px;
+    position: relative;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.modal-content-form h2 {
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    color: #333;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 1rem;
+    box-sizing: border-box;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #dc3545;
+    box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.2);
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 2rem;
+}
+
+.form-actions button {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background 0.3s;
+}
+
+.form-actions button[type="submit"] {
+    background: #22c55e;
+    color: white;
+}
+
+.form-actions button[type="submit"]:hover {
+    background: #16a34a;
+}
+
+.form-actions button[type="button"] {
+    background: #6c757d;
+    color: white;
+}
+
+.form-actions button[type="button"]:hover {
+    background: #5a6268;
+}
+
+.contact-messages-section {
+    padding: 4rem 0;
+    background: white;
+}
+
+.contact-messages-section h2 {
+    text-align: center;
+    font-size: 2rem;
+    margin-bottom: 3rem;
+    color: #333;
+}
+
+.messages-list {
+    background: white;
+    border-radius: 15px;
+    padding: 2rem;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+}
+
+.message-item {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1.5rem;
+    border-radius: 10px;
+    margin-bottom: 1rem;
+    transition: background 0.3s;
+    border-left: 4px solid transparent;
+}
+
+.message-item.unread {
+    background: #f8f9ff;
+    border-left-color: #007bff;
+}
+
+.message-item:hover {
+    background: #f8f9fa;
+}
+
+.message-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.2rem;
+    background: #007bff;
+}
+
+.message-item.unread .message-icon {
+    background: #28a745;
+}
+
+.message-details {
+    flex: 1;
+}
+
+.message-details h4 {
+    margin: 0 0 0.5rem 0;
+    color: #333;
+    font-size: 1.1rem;
+}
+
+.message-details p {
+    margin: 0.25rem 0;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.message-details small {
+    color: #999;
+    font-size: 0.8rem;
+}
+
+.message-actions {
+    display: flex;
+    align-items: center;
+}
+
+.mark-read-btn {
+    padding: 6px 12px;
+    background: #28a745;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: background 0.3s;
+}
+
+.mark-read-btn:hover {
+    background: #218838;
+}
+
+.read-status {
+    color: #28a745;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.unread-badge {
+    background: #22c55e;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    margin-top: 0.5rem;
+    display: inline-block;
+}
+
+/* Search and Filter Styles */
+.search-filter-section {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 10px;
+    margin-bottom: 2rem;
+    border: 1px solid #e9ecef;
+}
+
+.search-bar-container {
+    position: relative;
+    margin-bottom: 1rem;
+}
+
+.search-input {
+    width: 100%;
+    padding: 12px 45px 12px 15px;
+    border: 2px solid #e9ecef;
+    border-radius: 25px;
+    font-size: 1rem;
+    outline: none;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.search-input:focus {
+    border-color: #22c55e;
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
+}
+
+.search-icon {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #666;
+    font-size: 1.1rem;
+}
+
+.filter-container {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.filter-select {
+    padding: 8px 12px;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    background: white;
+    color: #333;
+    cursor: pointer;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.3s ease;
+}
+
+.filter-select:focus {
+    border-color: #22c55e;
+}
+
+.clear-filters-btn {
+    padding: 8px 16px;
+    background: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background 0.3s ease;
+}
+
+.clear-filters-btn:hover {
+    background: #5a6268;
+}
+
+.search-results-info {
+    margin-bottom: 1rem;
+    padding: 0.5rem 1rem;
+    background: #e3f2fd;
+    border-radius: 6px;
+    color: #1976d2;
+    font-size: 0.9rem;
+    display: none;
+}
+
+.no-results {
+    text-align: center;
+    padding: 2rem;
+    color: #666;
+    font-style: italic;
+}
+
+@media (max-width: 768px) {
+    .filter-container {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .filter-select,
+    .clear-filters-btn {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 1400px) {
+    .admin-dashboard {
+        margin-top: 75px;
+        padding-top: 15px;
+    }
+    
+    .nav-cards {
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 1.5rem;
+    }
+}
+
+@media (max-width: 1200px) {
+    .admin-dashboard {
+        margin-top: 80px;
+        padding-top: 20px;
+    }
+    
+    .nav-cards {
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
+}
+
+@media (max-width: 992px) {
+    .dashboard-header {
+        padding: 3rem 0;
+    }
+    
+    .dashboard-header h1 {
+        font-size: 2.2rem;
+    }
+    
+    .dashboard-nav,
+    .admin-stats,
+    .recent-activity,
+    .contact-messages-section {
+        padding: 3rem 0;
+    }
+    
+    .activity-item {
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    
+    .assignment-controls {
+        min-width: 250px;
+    }
+}
+
+@media (max-width: 768px) {
+    .admin-dashboard {
+        margin-top: 85px;
+        padding-top: 25px;
+    }
+    
+    .dashboard-header {
+        padding: 2rem 0;
+    }
+    
+    .dashboard-header h1 {
+        font-size: 1.8rem;
+    }
+    
+    .nav-cards {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .nav-card {
+        padding: 2rem;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+    
+    .stat-item {
+        padding: 1.5rem;
+    }
+    
+    .activity-item {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+        padding: 1rem;
+    }
+    
+    .assignment-controls {
+        flex-direction: column;
+        width: 100%;
+        min-width: auto;
+    }
+    
+    .assignee-select,
+    .volunteer-select {
+        width: 100%;
+    }
+    
+    .dashboard-nav,
+    .admin-stats,
+    .recent-activity,
+    .contact-messages-section {
+        padding: 2rem 0;
+    }
+}
+
+@media (max-width: 480px) {
+    .admin-dashboard {
+        margin-top: 90px;
+        padding-top: 30px;
+    }
+    
+    .dashboard-header h1 {
+        font-size: 1.5rem;
+    }
+    
+    .nav-card {
+        padding: 1.5rem;
+    }
+    
+    .card-icon {
+        font-size: 2.5rem;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+    }
+    
+    .activity-list {
+        padding: 1rem;
+    }
+    
+    .modal-content-form {
+        margin: 2% auto;
+        padding: 1.5rem;
+        width: 95%;
+    }
+}
+</style>
+
+<script>
+function assignTask(reportId) {
+    console.log('Assignment function called for report:', reportId);
+    
+    const selectElement = document.querySelector(`select[data-report-id="${reportId}"]`);
+    if (!selectElement) {
+        alert('Error: Could not find assignment dropdown for report ' + reportId);
+        console.error('Select element not found for report:', reportId);
+        return;
+    }
+    
+    const assigneeId = selectElement.value;
+    if (!assigneeId) {
+        alert('Please select an assignee first.');
+        return;
+    }
+    
+    const selectedOption = selectElement.options[selectElement.selectedIndex];
+    const assigneeType = selectedOption.getAttribute('data-type') || 'volunteer';
+    const assigneeName = selectedOption.text;
+    
+    console.log('Assignment details:', {
+        reportId: reportId,
+        assigneeId: assigneeId,
+        assigneeType: assigneeType,
+        assigneeName: assigneeName
+    });
+    
+    if (confirm('Assign this waste cleanup task to ' + assigneeName + '?')) {
+        // Disable the button to prevent double-clicking
+        const assignButton = document.querySelector(`button[onclick="assignTask(${reportId})"]`);
+        if (assignButton) {
+            assignButton.disabled = true;
+            assignButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Assigning...';
+        }
+        
+        const requestData = {
+            report_id: reportId,
+            volunteer_id: assigneeId,
+            assignee_type: assigneeType
+        };
+        
+        console.log('Sending assignment request:', requestData);
+        
+        fetch('/assign-volunteer/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestData)
+        })
+        .then(response => {
+            console.log('Response status:', response.status);
+            if (!response.ok) {
+                throw new Error('HTTP ' + response.status);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Response data:', data);
+            if (data.success) {
+                alert(data.message);
+                location.reload();
+            } else {
+                alert('Assignment failed: ' + data.message);
+                // Re-enable button on error
+                if (assignButton) {
+                    assignButton.disabled = false;
+                    assignButton.innerHTML = '<i class="fas fa-user-plus"></i> Assign Task';
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Assignment error:', error);
+            alert('Network error: ' + error.message + '. Please try again.');
+            // Re-enable button on error
+            if (assignButton) {
+                assignButton.disabled = false;
+                assignButton.innerHTML = '<i class="fas fa-user-plus"></i> Assign Task';
+            }
+        });
+    }
+}
+
+// Helper function to get CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function openImageModal(imageSrc) {
+    const modal = document.getElementById('imageModal');
+    const modalImg = document.getElementById('modalImage');
+    modal.style.display = 'block';
+    modalImg.src = imageSrc;
+}
+
+function closeImageModal() {
+    document.getElementById('imageModal').style.display = 'none';
+}
+
+window.onclick = function(event) {
+    const modal = document.getElementById('imageModal');
+    if (event.target == modal) {
+        modal.style.display = 'none';
+    }
+}
+
+function showAnalytics() {
+    alert('System Analytics:\n\nTotal Reports: {{ total_reports }}\nCompleted: {{ completed_reports }}\nPending: {{ pending_reports }}\nIn Progress: {{ in_progress_reports }}\nResolution Rate: {{ resolution_rate }}%');
+}
+
+// Load status images for admin view
+document.addEventListener('DOMContentLoaded', function() {
+    loadStatusImages();
+});
+
+function loadStatusImages() {
+    const statusContainers = document.querySelectorAll('[id^="statusImages"]');
+    
+    statusContainers.forEach(container => {
+        const reportId = container.id.replace('statusImages', '');
+        const beforeKey = `task_${reportId}_before`;
+        const afterKey = `task_${reportId}_after`;
+        
+        let imagesHtml = '';
+        
+        // Check for before image
+        const beforeImage = localStorage.getItem(beforeKey);
+        if (beforeImage) {
+            const imageInfo = JSON.parse(beforeImage);
+            imagesHtml += `
+                <div class="status-image">
+                    <img src="${imageInfo.data}" alt="Before" onclick="openImageModal('${imageInfo.data}')">
+                    <div class="image-type">Before</div>
+                </div>
+            `;
+        }
+        
+        // Check for after image
+        const afterImage = localStorage.getItem(afterKey);
+        if (afterImage) {
+            const imageInfo = JSON.parse(afterImage);
+            imagesHtml += `
+                <div class="status-image">
+                    <img src="${imageInfo.data}" alt="After" onclick="openImageModal('${imageInfo.data}')">
+                    <div class="image-type">After</div>
+                </div>
+            `;
+        }
+        
+        if (!imagesHtml) {
+            imagesHtml = '<div class="no-status-images">No progress images captured yet</div>';
+        }
+        
+        container.innerHTML = imagesHtml;
+    });
+}
+
+function showCreateEventModal() {
+    document.getElementById('createEventModal').style.display = 'block';
+    // Set minimum date to today
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('eventDate').min = today;
+}
+
+function closeCreateEventModal() {
+    document.getElementById('createEventModal').style.display = 'none';
+    document.getElementById('createEventForm').reset();
+}
+
+// Handle form submission
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('createEventForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const eventData = {
+            title: formData.get('title'),
+            event_type: formData.get('event_type'),
+            location: formData.get('location'),
+            date: formData.get('date'),
+            time: formData.get('time'),
+            max_participants: formData.get('max_participants'),
+            description: formData.get('description')
+        };
+        
+        // Disable submit button
+        const submitBtn = this.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Creating...';
+        
+        fetch('/organize-events/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(eventData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Event created successfully!');
+                closeCreateEventModal();
+                location.reload();
+            } else {
+                alert('Error creating event: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Network error. Please try again.');
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Create Event';
+        });
+    });
+    
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+        const imageModal = document.getElementById('imageModal');
+        const createEventModal = document.getElementById('createEventModal');
+        
+        if (event.target == imageModal) {
+            imageModal.style.display = 'none';
+        }
+        if (event.target == createEventModal) {
+            closeCreateEventModal();
+        }
+    }
+});
+
+function markAsRead(messageId) {
+    fetch('/mark-message-read/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({message_id: messageId})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Network error. Please try again.');
+    });
+}
+
+// Search and Filter Functionality
+let searchTimeout;
+
+// Reports Search and Filter
+function searchReports() {
+    const searchQuery = document.getElementById('reportSearch').value;
+    const wasteType = document.getElementById('wasteTypeFilter').value;
+    const severity = document.getElementById('severityFilter').value;
+    const status = document.getElementById('statusFilter').value;
+    
+    const params = new URLSearchParams({
+        q: searchQuery,
+        waste_type: wasteType,
+        severity: severity,
+        status: status
+    });
+    
+    fetch(`/search-reports/?${params}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayReports(data.reports);
+            }
+        })
+        .catch(error => console.error('Search error:', error));
+}
+
+function displayReports(reports) {
+    const reportsList = document.getElementById('reportsList');
+    
+    if (reports.length === 0) {
+        reportsList.innerHTML = '<div class="no-results">No reports found matching your criteria.</div>';
+        return;
+    }
+    
+    let html = '';
+    reports.forEach(report => {
+        html += `
+            <div class="activity-item">
+                <div class="activity-icon report">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="activity-details">
+                    <h4>${report.waste_type} - ${report.severity} Priority</h4>
+                    <p>${report.location} • ${report.created_at}</p>
+                    <p><small>${report.description}</small></p>
+                    <p><small><strong>Reporter:</strong> ${report.user}</small></p>
+                    ${report.assigned_volunteer ? `<p><small><strong>Assigned to:</strong> ${report.assigned_volunteer}</small></p>` : ''}
+                </div>
+                <div class="activity-status ${report.status.toLowerCase().replace(' ', '-')}">
+                    ${report.status}
+                </div>
+            </div>
+        `;
+    });
+    
+    reportsList.innerHTML = html;
+}
+
+// Messages Search and Filter
+function searchMessages() {
+    const searchQuery = document.getElementById('messageSearch').value;
+    const readStatus = document.getElementById('readStatusFilter').value;
+    
+    const params = new URLSearchParams({
+        q: searchQuery,
+        read_status: readStatus
+    });
+    
+    fetch(`/search-messages/?${params}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayMessages(data.messages);
+            }
+        })
+        .catch(error => console.error('Search error:', error));
+}
+
+function displayMessages(messages) {
+    const messagesList = document.getElementById('messagesList');
+    
+    if (messages.length === 0) {
+        messagesList.innerHTML = '<div class="no-results">No messages found matching your criteria.</div>';
+        return;
+    }
+    
+    let html = '';
+    messages.forEach(msg => {
+        html += `
+            <div class="message-item ${!msg.is_read ? 'unread' : ''}">
+                <div class="message-icon">
+                    <i class="fas fa-envelope${!msg.is_read ? '-open' : ''}"></i>
+                </div>
+                <div class="message-details">
+                    <h4>${msg.subject}</h4>
+                    <p><strong>From:</strong> ${msg.name} (${msg.email})</p>
+                    <p>${msg.message}</p>
+                    <small>${msg.created_at}</small>
+                </div>
+                <div class="message-actions">
+                    ${!msg.is_read ? 
+                        `<button class="mark-read-btn" onclick="markAsRead(${msg.id})">
+                            <i class="fas fa-check"></i> Mark Read
+                        </button>` : 
+                        '<span class="read-status"><i class="fas fa-check-circle"></i> Read</span>'
+                    }
+                </div>
+            </div>
+        `;
+    });
+    
+    messagesList.innerHTML = html;
+}
+
+// Initialize search functionality when page loads
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeSearch);
+} else {
+    initializeSearch();
+}
+
+function initializeSearch() {
+    // Reports search with debounce
+    const reportSearch = document.getElementById('reportSearch');
+    if (reportSearch) {
+        reportSearch.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(searchReports, 300);
+        });
+    }
+    
+    // Reports filters
+    const reportFilters = ['wasteTypeFilter', 'severityFilter', 'statusFilter'];
+    reportFilters.forEach(filterId => {
+        const filter = document.getElementById(filterId);
+        if (filter) {
+            filter.addEventListener('change', searchReports);
+        }
+    });
+    
+    // Clear reports filters
+    const clearFilters = document.getElementById('clearFilters');
+    if (clearFilters) {
+        clearFilters.addEventListener('click', function() {
+            document.getElementById('reportSearch').value = '';
+            document.getElementById('wasteTypeFilter').value = '';
+            document.getElementById('severityFilter').value = '';
+            document.getElementById('statusFilter').value = '';
+            location.reload();
+        });
+    }
+    
+    // Messages search with debounce
+    const messageSearch = document.getElementById('messageSearch');
+    if (messageSearch) {
+        messageSearch.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(searchMessages, 300);
+        });
+    }
+    
+    // Messages filter
+    const readStatusFilter = document.getElementById('readStatusFilter');
+    if (readStatusFilter) {
+        readStatusFilter.addEventListener('change', searchMessages);
+    }
+    
+    // Clear messages filters
+    const clearMessageFilters = document.getElementById('clearMessageFilters');
+    if (clearMessageFilters) {
+        clearMessageFilters.addEventListener('click', function() {
+            document.getElementById('messageSearch').value = '';
+            document.getElementById('readStatusFilter').value = '';
+            location.reload();
+        });
+    }
+}
+
+function scrollToMessages(event) {
+    event.preventDefault();
+    document.getElementById('contact-messages').scrollIntoView({
+        behavior: 'smooth'
+    });
+}
+</script>
+{% endblock %}

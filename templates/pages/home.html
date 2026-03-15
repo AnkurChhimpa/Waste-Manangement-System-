@@ -1,0 +1,630 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Trashify - Clean Future{% endblock %}
+
+{% block content %}
+<style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        .eco-badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            backdrop-filter: blur(10px);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        /* Remove duplicate header styles - now in navbar component */
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hero::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: url('{% static "images/home-page.png" %}');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            opacity: 0.7;
+            z-index: 0;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="2" fill="rgba(255,255,255,0.1)"/><circle cx="80" cy="40" r="1" fill="rgba(255,255,255,0.1)"/></svg>');
+        }
+
+        .hero-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            text-align: center;
+            color: white;
+            position: relative;
+            z-index: 3;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .hero-badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            margin-bottom: 2rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .hero-title {
+            font-size: 5rem;
+            font-weight: 900;
+            margin-bottom: 1rem;
+            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            color: #1b5e20;
+            font-family: 'Arial Black', Arial, sans-serif;
+        }
+
+        .hero-tagline {
+            font-size: 1.3rem;
+            margin-bottom: 3rem;
+            opacity: 0.9;
+            color: black;
+            font-weight: bold;
+        }
+
+        .hero-stats {
+            display: flex;
+            justify-content: center;
+            gap: 6rem;
+            margin-bottom: 2rem;
+            background: #c8e6c9;
+            border-radius: 20px;
+            padding: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 800;
+            display: block;
+            color: black;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: black;
+        }
+
+        .hero-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .btn-hero {
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+            border-radius: 30px;
+            min-width: 200px;
+            text-align: center;
+        }
+
+        .btn-green {
+            background: #28a745;
+            color: white;
+            border: none;
+        }
+
+        .btn-purple {
+            background: #16a34a;
+            color: white;
+            border: none;
+        }
+
+        .floating-icons {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .floating-icon {
+            position: absolute;
+            font-size: 2rem;
+            opacity: 0.3;
+            animation: float 8s ease-in-out infinite;
+        }
+
+        .floating-icon:nth-child(1) { top: 15%; left: 8%; animation-delay: 0s; }
+        .floating-icon:nth-child(2) { top: 70%; right: 12%; animation-delay: 2s; }
+        .floating-icon:nth-child(3) { bottom: 25%; left: 15%; animation-delay: 4s; }
+        .floating-icon:nth-child(4) { top: 40%; right: 25%; animation-delay: 1s; }
+        .floating-icon:nth-child(5) { bottom: 60%; left: 5%; animation-delay: 3s; }
+        .floating-icon:nth-child(6) { top: 25%; left: 25%; animation-delay: 1.5s; }
+        .floating-icon:nth-child(7) { top: 80%; right: 30%; animation-delay: 3.5s; }
+        .floating-icon:nth-child(8) { bottom: 40%; right: 8%; animation-delay: 5s; }
+        .floating-icon:nth-child(9) { top: 60%; left: 35%; animation-delay: 2.5s; }
+        .floating-icon:nth-child(10) { bottom: 15%; right: 40%; animation-delay: 4.5s; }
+        .floating-icon:nth-child(11) { top: 35%; left: 60%; animation-delay: 6s; }
+        .floating-icon:nth-child(12) { bottom: 70%; left: 40%; animation-delay: 0.5s; }
+        .floating-icon:nth-child(13) { top: 50%; right: 15%; animation-delay: 7s; }
+        .floating-icon:nth-child(14) { bottom: 50%; left: 70%; animation-delay: 1.8s; }
+        .floating-icon:nth-child(15) { top: 10%; right: 50%; animation-delay: 3.2s; }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+
+        /* Features Section */
+        .features {
+            padding: 5rem 0;
+            background: #f8f9fa;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .section-badge {
+            display: inline-block;
+            background: #28a745;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 3rem;
+            color: #333;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s;
+            border: 1px solid rgba(40, 167, 69, 0.1);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            border-color: #28a745;
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            color: #28a745;
+            margin-bottom: 1rem;
+        }
+
+        .feature-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #333;
+        }
+
+        .feature-description {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        /* Role Selection */
+        .roles {
+            padding: 5rem 0;
+            background: white;
+        }
+
+        .roles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .role-card {
+            background: white;
+            border-radius: 20px;
+            padding: 2.5rem;
+            text-align: center;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s;
+            position: relative;
+            border: 2px solid transparent;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .role-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+        }
+
+        .role-card:nth-child(1):hover { border-color: #28a745; }
+        .role-card:nth-child(2):hover { border-color: #17a2b8; }
+        .role-card:nth-child(3):hover { border-color: #dc3545; }
+
+        .role-tag {
+            position: absolute;
+            top: -10px;
+            right: 20px;
+            padding: 0.3rem 0.8rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: white;
+        }
+
+        .tag-green { background: #28a745; }
+        .tag-blue { background: #17a2b8; }
+        .tag-red { background: #dc3545; }
+
+        .role-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            font-size: 2rem;
+            color: white;
+        }
+
+        .icon-green { background: linear-gradient(135deg, #28a745, #20c997); }
+        .icon-blue { background: linear-gradient(135deg, #17a2b8, #20c997); }
+        .icon-red { background: linear-gradient(135deg, #dc3545, #e74c3c); }
+
+        .role-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #333;
+        }
+
+        .role-description {
+            color: #666;
+            margin-bottom: 1.5rem;
+            line-height: 1.5;
+        }
+
+        .role-features {
+            list-style: none;
+            text-align: left;
+            margin-bottom: 2rem;
+            flex-grow: 1;
+        }
+
+        .role-features li {
+            padding: 0.5rem 0;
+            color: #555;
+            position: relative;
+            padding-left: 1.5rem;
+        }
+
+        .role-features li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        .role-btn {
+            width: 100%;
+            padding: 1rem;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: white;
+        }
+
+        .btn-role-green { background: linear-gradient(135deg, #28a745, #20c997); }
+        .btn-role-blue { background: linear-gradient(135deg, #17a2b8, #20c997); }
+        .btn-role-red { background: linear-gradient(135deg, #dc3545, #e74c3c); }
+
+        .role-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Footer */
+        .footer {
+            background: #2c3e50;
+            color: white;
+            padding: 3rem 0 1rem;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .footer-section h4 {
+            color: #28a745;
+            margin-bottom: 1rem;
+        }
+
+        .footer-links {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: 0.5rem;
+        }
+
+        .footer-links a {
+            color: #ecf0f1;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .footer-links a:hover {
+            color: #28a745;
+        }
+
+        .social-links {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .social-link {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            text-align: center;
+            line-height: 40px;
+            color: white;
+            transition: all 0.3s;
+        }
+
+        .social-link:hover {
+            background: #28a745;
+            transform: translateY(-2px);
+        }
+
+        .footer-bottom {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 1rem;
+            text-align: center;
+            color: #bdc3c7;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .nav-menu, .search-bar {
+                display: none;
+            }
+
+            .hero-title {
+                font-size: 2.5rem;
+            }
+
+            .hero-stats {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .hero-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .section-title {
+                font-size: 2rem;
+            }
+
+            .roles-grid {
+                grid-template-columns: 1fr !important;
+                gap: 2rem !important;
+                max-width: 400px !important;
+            }
+        }
+    </style>
+
+    <!-- Hero Section -->
+    <section class="hero">
+
+        <div class="floating-icons">
+            <div class="floating-icon">🌍</div>
+            <div class="floating-icon">🌿</div>
+            <div class="floating-icon">♻️</div>
+            <div class="floating-icon">🌱</div>
+            <div class="floating-icon">💚</div>
+            <div class="floating-icon">🍃</div>
+            <div class="floating-icon">🌾</div>
+            <div class="floating-icon">🌸</div>
+            <div class="floating-icon">🦋</div>
+            <div class="floating-icon">🌺</div>
+            <div class="floating-icon">🌻</div>
+            <div class="floating-icon">🐝</div>
+            <div class="floating-icon">🌼</div>
+            <div class="floating-icon">🌳</div>
+            <div class="floating-icon">🌲</div>
+        </div>
+        <div class="hero-container">
+            <div class="hero-badge">Eco-Friendly Platform</div>
+            <h1 class="hero-title">TRASHIFY</h1>
+            <p class="hero-tagline">Click. Report. Reward. Together for a Cleaner Tomorrow.</p>
+            <div class="hero-stats">
+                <div class="stat-item">
+                    <span class="stat-number">{{ total_reports }}</span>
+                    <span class="stat-label">Reports</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">{{ total_users }}</span>
+                    <span class="stat-label">Users</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">{{ areas_cleaned }}</span>
+                    <span class="stat-label">Areas Cleaned</span>
+                </div>
+            </div>
+            <div class="hero-buttons">
+                <a href="{% url 'report_waste' %}" class="btn btn-hero btn-green" style="text-decoration: none; color: white;">
+                    <i class="fas fa-camera"></i> Report Waste
+                </a>
+                <a href="{% url 'dashboard' %}" class="btn btn-hero btn-purple" style="text-decoration: none; color: white;">
+                    <i class="fas fa-chart-bar"></i> View Dashboard
+                </a>
+            </div>
+        </div>
+    </section>
+
+
+
+    <!-- Role Selection -->
+    <section class="roles">
+        <div class="container">
+            <div style="text-align: center;">
+                <div class="section-badge">Get Started</div>
+                <h2 class="section-title">Choose Your Role</h2>
+                <p style="color: #666; margin-bottom: 2rem;">Select the role that best describes how you want to contribute to our mission</p>
+            </div>
+            <div class="roles-grid" style="grid-template-columns: repeat(2, 1fr); max-width: 800px; margin: 0 auto; gap: 3rem;">
+                <div class="role-card">
+                    <div class="role-tag tag-green">Most Popular</div>
+                    <div class="role-icon icon-green">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <h3 class="role-title">Normal User</h3>
+                    <p class="role-description">Join our community to report waste issues and track your environmental impact.</p>
+                    <ul class="role-features">
+                        <li>Report waste collection issues</li>
+                        <li>Track your recycling contributions</li>
+                        <li>View collection schedules</li>
+                        <li>Earn points for eco-friendly actions</li>
+                        <li>Access educational resources</li>
+                    </ul>
+                    <a href="/user-dashboard/" class="role-btn btn-role-green" style="text-decoration: none; display: block; text-align: center;">
+                        Continue as User <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+                <div class="role-card">
+                    <div class="role-tag tag-blue">Community Hero</div>
+                    <div class="role-icon icon-blue">
+                        <i class="fas fa-hands-helping"></i>
+                    </div>
+                    <h3 class="role-title">Volunteer</h3>
+                    <p class="role-description">Help your community by organizing cleanup drives and spreading awareness.</p>
+                    <ul class="role-features">
+                        <li>Organize community cleanup events</li>
+                        <li>Verify and resolve user reports</li>
+                        <li>Educate community members</li>
+                        <li>Track volunteer hours and impact</li>
+                        <li>Access volunteer resources and tools</li>
+                    </ul>
+                    <a href="{% url 'organize_events' %}" class="role-btn btn-role-blue" style="text-decoration: none; display: block; text-align: center;">
+                        Continue as Volunteer <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features">
+        <div class="container">
+            <div style="text-align: center;">
+                <div class="section-badge">Why Choose Us</div>
+                <h2 class="section-title">Making Environmental Impact Easy</h2>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-globe"></i>
+                    </div>
+                    <h3 class="feature-title">Real-time Tracking</h3>
+                    <p class="feature-description">Monitor cleanup progress and environmental impact in real-time with our advanced tracking system.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    <h3 class="feature-title">Reward System</h3>
+                    <p class="feature-description">Earn points and recognition for your environmental contributions. Compete on leaderboards and unlock achievements.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-heart"></i>
+                    </div>
+                    <h3 class="feature-title">Community Driven</h3>
+                    <p class="feature-description">Join a passionate community of environmental advocates working together for a cleaner, sustainable future.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {% if show_training_popup %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                showPopup('🌱 Welcome to Trashify!', 'Learn how to make a real environmental impact through proper waste management and community action.<br><br><div class="text-center"><a href="{% url "training" %}" class="btn btn-success me-2">Go to Training</a><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Maybe Later</button></div>');
+            }, 1000);
+        });
+    </script>
+    {% endif %}
+
+{% endblock %}

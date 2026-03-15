@@ -1,0 +1,370 @@
+{% load static %}
+<header class="header-nav">
+    <nav class="nav-wrapper">
+
+
+        <div class="logo-section">
+            <a href="{% url 'home' %}">
+                <img src="{% static 'images/logo.png' %}" alt="Logo" style="height: 50px; width: auto;">
+            </a>
+        </div>
+
+        <div class="nav-links">
+            <a href="{% url 'home' %}" class="nav-item">Home</a>
+            <a href="{% url 'organize_events' %}" class="nav-item">Events</a>
+            <a href="{% url 'about' %}" class="nav-item">About Us</a>
+            <a href="{% url 'mission' %}" class="nav-item">Mission</a>
+            <a href="{% url 'vision' %}" class="nav-item">Vision</a>
+            <a href="{% url 'training' %}" class="nav-item">Training</a>
+            <a href="{% url 'contact' %}" class="nav-item">Contact Us</a>
+        </div>
+        
+        <div class="mobile-menu-btn" onclick="toggleMobileMenu()">
+            <i class="fas fa-bars"></i>
+        </div>
+
+        <div class="header-actions">
+            <div class="auth-buttons">
+                {% if user.is_authenticated %}
+                    <span class="welcome-text">Welcome, {{ user.username }}!</span>
+                    <a href="{% url 'logout' %}" class="login-btn">Logout</a>
+                {% else %}
+                    <a href="{% url 'login' %}" class="login-btn">Login</a>
+                    <a href="{% url 'register' %}" class="signup-btn">Register</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+</header>
+
+<!-- Mobile Sidebar -->
+<div class="mobile-overlay" onclick="closeMobileMenu()"></div>
+<div class="mobile-sidebar" id="mobileSidebar">
+    <div class="sidebar-header">
+        <img src="{% static 'images/logo.png' %}" alt="Logo" style="height: 40px;">
+        <button class="sidebar-close" onclick="closeMobileMenu()">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+    <nav class="sidebar-nav">
+        <a href="{% url 'home' %}">Home</a>
+        <a href="{% url 'organize_events' %}">Events</a>
+        <a href="{% url 'about' %}">About Us</a>
+        <a href="{% url 'mission' %}">Mission</a>
+        <a href="{% url 'vision' %}">Vision</a>
+        <a href="{% url 'training' %}">Training</a>
+        <a href="{% url 'contact' %}">Contact Us</a>
+        {% if user.is_authenticated %}
+            <a href="{% url 'logout' %}">Logout</a>
+        {% else %}
+            <a href="{% url 'login' %}">Login</a>
+            <a href="{% url 'register' %}">Register</a>
+        {% endif %}
+    </nav>
+</div>
+
+<script>
+function toggleMobileMenu() {
+    const sidebar = document.getElementById('mobileSidebar');
+    const overlay = document.querySelector('.mobile-overlay');
+    sidebar.classList.toggle('active');
+    overlay.classList.toggle('active');
+}
+
+function closeMobileMenu() {
+    const sidebar = document.getElementById('mobileSidebar');
+    const overlay = document.querySelector('.mobile-overlay');
+    sidebar.classList.remove('active');
+    overlay.classList.remove('active');
+}
+</script>
+
+<style>
+.header-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(15px);
+    box-shadow: 0 2px 25px rgba(0, 0, 0, 0.1);
+    z-index: 9999;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    min-height: 65px;
+}
+
+.nav-wrapper {
+    width: 100%;
+    max-width: 100vw;
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 65px;
+    min-height: 65px;
+    box-sizing: border-box;
+}
+
+.logo-section {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.logo-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+}
+
+.logo-circle {
+    font-size: 2rem;
+    background: linear-gradient(135deg, #28a745, #007bff);
+    padding: 8px;
+    border-radius: 50%;
+    box-shadow: 0 3px 12px rgba(40, 167, 69, 0.3);
+}
+
+.brand h1 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin: 0;
+    background: linear-gradient(135deg, #28a745, #007bff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.brand span {
+    font-size: 0.7rem;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.nav-links {
+    display: flex;
+    gap: 2rem;
+}
+
+.nav-item {
+    text-decoration: none;
+    color: #666;
+    font-weight: 500;
+    padding: 8px 16px;
+    border-radius: 20px;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+}
+
+.nav-item:hover {
+    background: rgba(40, 167, 69, 0.1);
+    color: #28a745;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.auth-buttons {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.welcome-text {
+    color: #28a745;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.login-btn,
+.signup-btn {
+    padding: 8px 18px;
+    border-radius: 20px;
+    font-weight: 500;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: none;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.login-btn {
+    background: transparent;
+    color: #28a745;
+    border: 2px solid #28a745;
+}
+
+.login-btn:hover {
+    background: #28a745;
+    color: white;
+}
+
+.signup-btn {
+    background: linear-gradient(135deg, #28a745, #007bff);
+    color: white;
+    box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+}
+
+.signup-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+}
+
+.mobile-menu-btn {
+    display: none;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #28a745;
+    cursor: pointer;
+    padding: 8px;
+}
+
+.mobile-sidebar {
+    position: fixed;
+    top: 0;
+    left: -300px;
+    width: 300px;
+    height: 100vh;
+    background: white;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+    z-index: 10000;
+    transition: left 0.3s ease;
+    overflow-y: auto;
+}
+
+.mobile-sidebar.active {
+    left: 0;
+}
+
+.sidebar-header {
+    padding: 1rem;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.sidebar-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #666;
+    cursor: pointer;
+}
+
+.sidebar-nav {
+    padding: 1rem 0;
+}
+
+.sidebar-nav a {
+    display: block;
+    padding: 1rem 1.5rem;
+    color: #333;
+    text-decoration: none;
+    border-bottom: 1px solid #f0f0f0;
+    transition: background 0.3s;
+}
+
+.sidebar-nav a:hover {
+    background: #f8f9fa;
+    color: #28a745;
+}
+
+.mobile-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0,0,0,0.5);
+    z-index: 9999;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.mobile-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+@media (max-width: 768px) {
+    .nav-wrapper {
+        padding: 0 1rem;
+    }
+    
+    .nav-links {
+        display: none;
+    }
+    
+    .mobile-menu-btn {
+        display: block;
+    }
+    
+    .brand h1 {
+        font-size: 1.2rem;
+    }
+}
+
+@media (max-width: 600px) {
+    .nav-wrapper {
+        padding: 0 0.5rem;
+        height: 60px;
+        min-height: 60px;
+    }
+    
+    .header-nav {
+        min-height: 60px;
+    }
+    
+    .logo-section img {
+        height: 35px !important;
+    }
+    
+    .auth-buttons {
+        gap: 0.5rem;
+    }
+    
+    .login-btn, .signup-btn {
+        padding: 6px 12px;
+        font-size: 0.8rem;
+    }
+    
+    .welcome-text {
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 400px) {
+    .nav-wrapper {
+        padding: 0 0.25rem;
+        height: 55px;
+        min-height: 55px;
+    }
+    
+    .header-nav {
+        min-height: 55px;
+    }
+    
+    .logo-section img {
+        height: 30px !important;
+    }
+    
+    .login-btn, .signup-btn {
+        padding: 4px 8px;
+        font-size: 0.75rem;
+    }
+    
+    .welcome-text {
+        display: none;
+    }
+}
+</style>

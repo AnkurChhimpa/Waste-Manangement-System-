@@ -1,0 +1,521 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Verify Reports - Trashify{% endblock %}
+
+{% block content %}
+<div class="verify-page">
+    <div class="page-header">
+        <div class="container">
+            <a href="/volunteer-dashboard/" class="back-btn">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </a>
+            <h1>Verify Reports</h1>
+            <p>Review and validate community waste reports</p>
+        </div>
+    </div>
+
+    <div class="verify-content">
+        <div class="container">
+            <div class="verify-stats">
+                <div class="stat-card">
+                    <div class="stat-number">12</div>
+                    <div class="stat-label">Pending Reviews</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">45</div>
+                    <div class="stat-label">Verified Today</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">3</div>
+                    <div class="stat-label">Rejected</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">98%</div>
+                    <div class="stat-label">Accuracy Rate</div>
+                </div>
+            </div>
+
+            <div class="reports-section">
+                <div class="section-header">
+                    <h2>Reports to Review</h2>
+                    <div class="filters">
+                        <select>
+                            <option>All Reports</option>
+                            <option>High Priority</option>
+                            <option>Medium Priority</option>
+                            <option>Low Priority</option>
+                        </select>
+                        <select>
+                            <option>All Types</option>
+                            <option>Plastic Waste</option>
+                            <option>Organic Waste</option>
+                            <option>Electronic Waste</option>
+                            <option>Hazardous Waste</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="reports-list">
+                    <div class="report-card high-priority">
+                        <div class="report-header">
+                            <div class="priority-badge high">High Priority</div>
+                            <div class="report-id">#WR-2024-001</div>
+                        </div>
+                        
+                        <div class="report-content">
+                            <div class="report-image">
+                                <div class="image-placeholder">
+                                    <i class="fas fa-image"></i>
+                                    <p>Waste Photo</p>
+                                </div>
+                            </div>
+                            
+                            <div class="report-details">
+                                <h3>Plastic Waste Accumulation</h3>
+                                <div class="report-info">
+                                    <div class="info-item">
+                                        <i class="fas fa-map-marker-alt"></i>
+                                        <span>Downtown Park, Main Street</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <i class="fas fa-user"></i>
+                                        <span>Reported by: John Doe</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <i class="fas fa-clock"></i>
+                                        <span>2 hours ago</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        <span>Severity: High</span>
+                                    </div>
+                                </div>
+                                <p class="report-description">
+                                    Large accumulation of plastic bottles and bags near the playground area. 
+                                    Poses risk to children and wildlife. Immediate cleanup required.
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div class="report-actions">
+                            <button class="action-btn approve">
+                                <i class="fas fa-check"></i> Approve
+                            </button>
+                            <button class="action-btn reject">
+                                <i class="fas fa-times"></i> Reject
+                            </button>
+                            <button class="action-btn more-info">
+                                <i class="fas fa-info-circle"></i> More Info
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="report-card medium-priority">
+                        <div class="report-header">
+                            <div class="priority-badge medium">Medium Priority</div>
+                            <div class="report-id">#WR-2024-002</div>
+                        </div>
+                        
+                        <div class="report-content">
+                            <div class="report-image">
+                                <div class="image-placeholder">
+                                    <i class="fas fa-image"></i>
+                                    <p>Waste Photo</p>
+                                </div>
+                            </div>
+                            
+                            <div class="report-details">
+                                <h3>Organic Waste in Garden</h3>
+                                <div class="report-info">
+                                    <div class="info-item">
+                                        <i class="fas fa-map-marker-alt"></i>
+                                        <span>Community Garden, Green Valley</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <i class="fas fa-user"></i>
+                                        <span>Reported by: Sarah Chen</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <i class="fas fa-clock"></i>
+                                        <span>5 hours ago</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        <span>Severity: Medium</span>
+                                    </div>
+                                </div>
+                                <p class="report-description">
+                                    Improper disposal of organic waste in the community garden. 
+                                    Could be composted instead of being left to rot.
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div class="report-actions">
+                            <button class="action-btn approve">
+                                <i class="fas fa-check"></i> Approve
+                            </button>
+                            <button class="action-btn reject">
+                                <i class="fas fa-times"></i> Reject
+                            </button>
+                            <button class="action-btn more-info">
+                                <i class="fas fa-info-circle"></i> More Info
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="report-card low-priority">
+                        <div class="report-header">
+                            <div class="priority-badge low">Low Priority</div>
+                            <div class="report-id">#WR-2024-003</div>
+                        </div>
+                        
+                        <div class="report-content">
+                            <div class="report-image">
+                                <div class="image-placeholder">
+                                    <i class="fas fa-image"></i>
+                                    <p>Waste Photo</p>
+                                </div>
+                            </div>
+                            
+                            <div class="report-details">
+                                <h3>Litter on Sidewalk</h3>
+                                <div class="report-info">
+                                    <div class="info-item">
+                                        <i class="fas fa-map-marker-alt"></i>
+                                        <span>Oak Street Sidewalk</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <i class="fas fa-user"></i>
+                                        <span>Reported by: Mike Wilson</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <i class="fas fa-clock"></i>
+                                        <span>1 day ago</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        <span>Severity: Low</span>
+                                    </div>
+                                </div>
+                                <p class="report-description">
+                                    Small amount of litter (cigarette butts and food wrappers) on sidewalk. 
+                                    Regular cleanup should handle this.
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div class="report-actions">
+                            <button class="action-btn approve">
+                                <i class="fas fa-check"></i> Approve
+                            </button>
+                            <button class="action-btn reject">
+                                <i class="fas fa-times"></i> Reject
+                            </button>
+                            <button class="action-btn more-info">
+                                <i class="fas fa-info-circle"></i> More Info
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.verify-page {
+    margin-top: 65px;
+    min-height: calc(100vh - 65px);
+}
+
+.page-header {
+    background: linear-gradient(135deg, #ffc107, #fd7e14);
+    color: white;
+    padding: 3rem 0;
+}
+
+.back-btn {
+    color: white;
+    text-decoration: none;
+    margin-bottom: 1rem;
+    display: inline-block;
+    opacity: 0.9;
+    transition: opacity 0.3s;
+}
+
+.back-btn:hover {
+    opacity: 1;
+}
+
+.page-header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.verify-content {
+    padding: 4rem 0;
+    background: #f8f9fa;
+}
+
+.verify-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.stat-card {
+    background: white;
+    padding: 2rem;
+    border-radius: 15px;
+    text-align: center;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    transition: transform 0.3s;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #ffc107;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    color: #666;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.reports-section {
+    background: white;
+    border-radius: 15px;
+    padding: 2rem;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.section-header h2 {
+    color: #333;
+    margin: 0;
+}
+
+.filters {
+    display: flex;
+    gap: 1rem;
+}
+
+.filters select {
+    padding: 8px 16px;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    background: white;
+}
+
+.reports-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.report-card {
+    border: 2px solid #e9ecef;
+    border-radius: 15px;
+    padding: 2rem;
+    transition: all 0.3s;
+}
+
+.report-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.report-card.high-priority {
+    border-color: #dc3545;
+}
+
+.report-card.medium-priority {
+    border-color: #ffc107;
+}
+
+.report-card.low-priority {
+    border-color: #28a745;
+}
+
+.report-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.priority-badge {
+    padding: 6px 12px;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.priority-badge.high {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.priority-badge.medium {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.priority-badge.low {
+    background: #d4edda;
+    color: #155724;
+}
+
+.report-id {
+    color: #666;
+    font-weight: 600;
+}
+
+.report-content {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.report-image {
+    background: #f8f9fa;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.image-placeholder {
+    height: 150px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #666;
+    border: 2px dashed #dee2e6;
+    border-radius: 10px;
+}
+
+.image-placeholder i {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+.report-details h3 {
+    color: #333;
+    margin-bottom: 1rem;
+    font-size: 1.3rem;
+}
+
+.report-info {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.info-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.info-item i {
+    color: #ffc107;
+    width: 16px;
+}
+
+.report-description {
+    color: #555;
+    line-height: 1.6;
+    margin: 0;
+}
+
+.report-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+}
+
+.action-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.action-btn.approve {
+    background: #28a745;
+    color: white;
+}
+
+.action-btn.reject {
+    background: #dc3545;
+    color: white;
+}
+
+.action-btn.more-info {
+    background: #17a2b8;
+    color: white;
+}
+
+.action-btn:hover {
+    transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+    .section-header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+    
+    .filters {
+        width: 100%;
+        flex-direction: column;
+    }
+    
+    .report-content {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .report-info {
+        grid-template-columns: 1fr;
+    }
+    
+    .report-actions {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .verify-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+</style>
+{% endblock %}

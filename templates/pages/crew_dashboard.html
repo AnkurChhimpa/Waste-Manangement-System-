@@ -1,0 +1,1531 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Crew Dashboard - Trashify{% endblock %}
+
+{% block content %}
+<div class="crew-dashboard">
+    <div class="dashboard-header">
+        <div class="container">
+            <h1>Crew Dashboard</h1>
+            <p>Welcome back, {{ crew_member.user.username }} (ID: {{ crew_member.employee_id }})</p>
+        </div>
+    </div>
+
+    <div class="dashboard-nav">
+        <div class="container">
+            <div class="nav-cards">
+                <div class="nav-card assigned-card" onclick="scrollToAssignments()" style="cursor: pointer;">
+                    <div class="card-icon">
+                        <i class="fas fa-clipboard-list"></i>
+                    </div>
+                    <h3>Assigned Tasks</h3>
+                    <p>New tasks waiting for your action</p>
+                    <div class="card-stat">{{ assigned_reports.count }} tasks</div>
+                </div>
+
+                <div class="nav-card progress-card">
+                    <div class="card-icon">
+                        <i class="fas fa-cog"></i>
+                    </div>
+                    <h3>In Progress</h3>
+                    <p>Tasks currently being worked on</p>
+                    <div class="card-stat">{{ in_progress_reports.count }} tasks</div>
+                </div>
+
+                <div class="nav-card completed-card">
+                    <div class="card-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <h3>Completed</h3>
+                    <p>Successfully finished tasks</p>
+                    <div class="card-stat">{{ completed_reports.count }} tasks</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="crew-stats">
+        <div class="container">
+            <h2>Performance Overview</h2>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-number">{{ total_assigned }}</div>
+                    <div class="stat-label">Total Assigned</div>
+                    <div class="stat-trend neutral">All time</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">{{ completion_rate }}%</div>
+                    <div class="stat-label">Completion Rate</div>
+                    <div class="stat-trend positive">{{ completed_reports.count }} completed</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">{{ total_assigned|add:total_assigned|add:total_assigned|add:total_assigned|add:total_assigned }}</div>
+                    <div class="stat-label">Points Earned</div>
+                    <div class="stat-trend positive">5 pts per task</div>
+                    <button class="redeem-btn" onclick="redeemPoints()">Redeem Points</button>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">{{ assigned_reports.count }}</div>
+                    <div class="stat-label">Pending Tasks</div>
+                    <div class="stat-trend neutral">Awaiting action</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">{{ in_progress_reports.count }}</div>
+                    <div class="stat-label">Active Tasks</div>
+                    <div class="stat-trend positive">In progress</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="task-sections">
+        <div class="container">
+            <!-- Assigned Tasks -->
+            {% if assigned_reports %}
+            <div class="task-section">
+                <h2>New Assignments</h2>
+                <div class="task-list">
+                    {% for report in assigned_reports %}
+                    <div class="task-item assigned" data-task-id="{{ report.id }}">
+                        <div class="task-icon severity-{{ report.severity }}">
+                            {% if report.severity == 'high' %}
+                            <i class="fas fa-exclamation-triangle"></i>
+                            {% elif report.severity == 'medium' %}
+                            <i class="fas fa-exclamation-circle"></i>
+                            {% else %}
+                            <i class="fas fa-info-circle"></i>
+                            {% endif %}
+                        </div>
+                        <div class="task-details">
+                            <div class="task-header">
+                                <h4>{{ report.get_waste_type_display }} Cleanup</h4>
+                            </div>
+                            <div class="task-info">
+                                <p><i class="fas fa-map-marker-alt"></i> <strong>Location:</strong> {{ report.location }}</p>
+                                <p><i class="fas fa-clock"></i> <strong>Assigned:</strong> {{ report.assigned_at|date:"M d, Y H:i" }} ({{ report.assigned_at|timesince }} ago)</p>
+                                <p><i class="fas fa-user"></i> <strong>Reported by:</strong> {{ report.user.username|default:"Anonymous" }}</p>
+                                {% if report.description %}
+                                <p><i class="fas fa-file-alt"></i> <strong>Description:</strong> {{ report.description }}</p>
+                                {% endif %}
+                                {% if report.latitude and report.longitude %}
+                                <p><i class="fas fa-crosshairs"></i> <strong>Coordinates:</strong> {{ report.latitude|floatformat:6 }}, {{ report.longitude|floatformat:6 }}</p>
+                                {% endif %}
+                            </div>
+                            {% if report.image %}
+                            <div class="task-image">
+                                <img src="{{ report.image }}" alt="Waste Photo" onclick="openTaskImageModal('{{ report.image }}', '{{ report.location }}')"/>
+                                <span class="image-label">Click to view full image</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="task-actions">
+                            <button class="action-btn start-btn" onclick="startTaskWithImage({{ report.id }})">
+                                <i class="fas fa-play"></i> Start Task
+                            </button>
+                            <button class="action-btn view-location-btn" onclick="viewLocation({{ report.latitude|default:'null' }}, {{ report.longitude|default:'null' }}, '{{ report.location }}')"
+                                    {% if not report.latitude or not report.longitude %}disabled{% endif %}>
+                                <i class="fas fa-map"></i> View Location
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- In Progress Tasks -->
+            {% if in_progress_reports %}
+            <div class="task-section">
+                <h2>Tasks in Progress</h2>
+                <div class="task-list">
+                    {% for report in in_progress_reports %}
+                    <div class="task-item in-progress" data-task-id="{{ report.id }}">
+                        <div class="task-icon severity-{{ report.severity }}">
+                            <i class="fas fa-cog fa-spin"></i>
+                        </div>
+                        <div class="task-details">
+                            <div class="task-header">
+                                <h4>{{ report.get_waste_type_display }} Cleanup</h4>
+                                <span class="status-badge status-progress">In Progress</span>
+                            </div>
+                            <div class="task-info">
+                                <p><i class="fas fa-map-marker-alt"></i> <strong>Location:</strong> {{ report.location }}</p>
+                                <p><i class="fas fa-play"></i> <strong>Started:</strong> {{ report.assigned_at|date:"M d, Y H:i" }} ({{ report.assigned_at|timesince }} ago)</p>
+                                <p><i class="fas fa-user"></i> <strong>Reported by:</strong> {{ report.user.username|default:"Anonymous" }}</p>
+                                {% if report.description %}
+                                <p><i class="fas fa-file-alt"></i> <strong>Description:</strong> {{ report.description }}</p>
+                                {% endif %}
+                            </div>
+                            {% if report.image %}
+                            <div class="task-image">
+                                <img src="{{ report.image }}" alt="Waste Photo" onclick="openTaskImageModal('{{ report.image }}', '{{ report.location }}')"/>
+                                <span class="image-label">Click to view full image</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="captured-images" id="capturedImages{{ report.id }}">
+                            <!-- Captured images will be displayed here -->
+                        </div>
+                        <div class="task-actions">
+                            <button class="action-btn capture-after-btn" id="captureAfter{{ report.id }}" onclick="completeTaskWithImage({{ report.id }})">
+                                <i class="fas fa-camera"></i> Capture After Image
+                            </button>
+                            <button class="action-btn retake-btn" id="retakeAfter{{ report.id }}" onclick="completeTaskWithImage({{ report.id }})" style="display: none;">
+                                <i class="fas fa-redo"></i> Retake After Image
+                            </button>
+                            <button class="action-btn complete-btn" id="markComplete{{ report.id }}" onclick="markTaskComplete({{ report.id }})" style="display: none;">
+                                <i class="fas fa-check"></i> Mark Complete
+                            </button>
+                            <button class="action-btn view-location-btn" onclick="viewLocation({{ report.latitude|default:'null' }}, {{ report.longitude|default:'null' }}, '{{ report.location }}')"
+                                    {% if not report.latitude or not report.longitude %}disabled{% endif %}>
+                                <i class="fas fa-map"></i> View Location
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Recent Completed Tasks -->
+            {% if completed_reports %}
+            <div class="task-section">
+                <h2>Recently Completed</h2>
+                <div class="task-list">
+                    {% for report in completed_reports|slice:":5" %}
+                    <div class="task-item completed">
+                        <div class="task-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="task-details">
+                            <h4>{{ report.get_waste_type_display }} Cleanup</h4>
+                            <p><i class="fas fa-map-marker-alt"></i> {{ report.location }}</p>
+                            <p><i class="fas fa-clock"></i> Completed {{ report.created_at|timesince }} ago</p>
+                        </div>
+                        <div class="task-status completed-status">
+                            <i class="fas fa-check"></i> Completed
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if not assigned_reports and not in_progress_reports and not completed_reports %}
+            <div class="no-tasks">
+                <div class="no-tasks-icon">
+                    <i class="fas fa-clipboard-check"></i>
+                </div>
+                <h3>No tasks assigned yet</h3>
+                <p>You'll see your assigned waste management tasks here once they're assigned by the admin.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+
+
+<!-- Image Capture Modal -->
+<div id="imageCaptureModal" class="image-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="imageModalTitle">Capture Before Image</h3>
+            <span class="close" onclick="closeImageModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div class="camera-section">
+                <video id="cameraVideo" autoplay playsinline style="display: none; width: 100%; max-width: 400px; border-radius: 10px;"></video>
+                <canvas id="cameraCanvas" style="display: none;"></canvas>
+                <div class="image-preview" id="imagePreview">
+                    <i class="fas fa-camera"></i>
+                    <p>Take a photo with camera</p>
+                </div>
+                <button class="capture-btn" id="startCameraBtn" onclick="startCamera()">
+                    <i class="fas fa-camera"></i> Start Camera
+                </button>
+                <button class="capture-btn" id="takePictureBtn" onclick="takePicture()" style="display: none;">
+                    <i class="fas fa-camera-retro"></i> Take Picture
+                </button>
+            </div>
+            <div class="modal-actions">
+                <button type="button" onclick="closeImageModal()">Cancel</button>
+                <button type="button" id="saveImageBtn" onclick="saveImage()" disabled>Save & Continue</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.crew-dashboard {
+    margin-top: 65px;
+    min-height: calc(100vh - 65px);
+}
+
+.dashboard-header {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+    padding: 4rem 0;
+    text-align: center;
+}
+
+.dashboard-header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.dashboard-nav {
+    padding: 4rem 0;
+    background: #f8f9fa;
+}
+
+.nav-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+}
+
+.nav-card {
+    background: white;
+    padding: 2.5rem;
+    border-radius: 15px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+    position: relative;
+}
+
+.nav-card:hover {
+    transform: translateY(-5px);
+}
+
+.nav-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    border-radius: 15px 15px 0 0;
+}
+
+.assigned-card::before { background: #ffc107; }
+.progress-card::before { background: #17a2b8; }
+.completed-card::before { background: #28a745; }
+
+.card-icon {
+    font-size: 3rem;
+    margin-bottom: 1.5rem;
+}
+
+.assigned-card .card-icon { color: #ffc107; }
+.progress-card .card-icon { color: #17a2b8; }
+.completed-card .card-icon { color: #28a745; }
+
+.nav-card h3 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    color: #333;
+}
+
+.nav-card p {
+    color: #666;
+    margin-bottom: 1.5rem;
+}
+
+.card-stat {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #28a745;
+}
+
+.crew-stats {
+    padding: 4rem 0;
+    background: white;
+}
+
+.crew-stats h2 {
+    text-align: center;
+    font-size: 2rem;
+    margin-bottom: 3rem;
+    color: #333;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 2rem;
+    background: #f8f9fa;
+    border-radius: 15px;
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #28a745;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    color: #666;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+}
+
+.stat-trend {
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.stat-trend.positive { color: #28a745; }
+.stat-trend.neutral { color: #6c757d; }
+
+.redeem-btn {
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 0.5rem;
+    transition: background 0.3s;
+}
+
+.redeem-btn:hover {
+    background: #218838;
+}
+
+
+
+.task-sections {
+    padding: 4rem 0;
+    background: #f8f9fa;
+}
+
+.task-section {
+    margin-bottom: 3rem;
+}
+
+.task-section h2 {
+    font-size: 1.8rem;
+    margin-bottom: 2rem;
+    color: #333;
+}
+
+.task-list {
+    background: white;
+    border-radius: 15px;
+    padding: 2rem;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+}
+
+.task-item {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1.5rem;
+    border-radius: 10px;
+    margin-bottom: 1rem;
+    transition: background 0.3s;
+}
+
+.task-item:hover {
+    background: #f8f9fa;
+}
+
+.task-item.assigned {
+    border-left: 4px solid #ffc107;
+}
+
+.task-item.in-progress {
+    border-left: 4px solid #17a2b8;
+}
+
+.task-item.completed {
+    border-left: 4px solid #28a745;
+}
+
+.task-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.priority-badge {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.priority-high {
+    background: #ffebee;
+    color: #c62828;
+    border: 1px solid #ffcdd2;
+}
+
+.priority-medium {
+    background: #fff3e0;
+    color: #ef6c00;
+    border: 1px solid #ffcc02;
+}
+
+.priority-low {
+    background: #e8f5e8;
+    color: #2e7d32;
+    border: 1px solid #c8e6c9;
+}
+
+.status-badge {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-progress {
+    background: #e3f2fd;
+    color: #1976d2;
+    border: 1px solid #bbdefb;
+}
+
+.task-info {
+    margin-bottom: 1rem;
+}
+
+.task-info p {
+    margin: 0.5rem 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+
+.task-info i {
+    margin-top: 0.2rem;
+    width: 16px;
+    color: #666;
+}
+
+.task-image {
+    margin-top: 1rem;
+    text-align: center;
+}
+
+.task-image img {
+    max-width: 200px;
+    max-height: 150px;
+    object-fit: cover;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.3s;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.task-image img:hover {
+    transform: scale(1.05);
+}
+
+.image-label {
+    display: block;
+    margin-top: 0.5rem;
+    font-size: 0.8rem;
+    color: #666;
+    font-style: italic;
+}
+
+.task-icon.severity-high {
+    background: #f44336;
+}
+
+.task-icon.severity-medium {
+    background: #ff9800;
+}
+
+.task-icon.severity-low {
+    background: #4caf50;
+}
+
+.view-location-btn {
+    background: #2196f3;
+    color: white;
+}
+
+.view-location-btn:hover:not(:disabled) {
+    background: #1976d2;
+}
+
+.view-location-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.task-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.2rem;
+}
+
+.task-item.assigned .task-icon { background: #ffc107; }
+.task-item.in-progress .task-icon { background: #17a2b8; }
+.task-item.completed .task-icon { background: #28a745; }
+
+.task-details {
+    flex: 1;
+}
+
+.task-details h4 {
+    margin: 0 0 0.5rem 0;
+    color: #333;
+    font-size: 1.1rem;
+}
+
+.task-details p {
+    margin: 0.25rem 0;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.task-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: 1rem;
+}
+
+.action-btn {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 140px;
+    justify-content: center;
+}
+
+.start-btn {
+    background: #17a2b8;
+    color: white;
+}
+
+.start-btn:hover {
+    background: #138496;
+}
+
+.complete-btn {
+    background: #28a745;
+    color: white;
+}
+
+.complete-btn:hover {
+    background: #218838;
+}
+
+.task-status {
+    padding: 8px 16px;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.completed-status {
+    background: #e8f5e8;
+    color: #2e7d32;
+}
+
+.no-tasks {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+}
+
+.no-tasks-icon {
+    font-size: 4rem;
+    color: #28a745;
+    margin-bottom: 2rem;
+}
+
+.no-tasks h3 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    color: #333;
+}
+
+.no-tasks p {
+    color: #666;
+    font-size: 1.1rem;
+}
+
+/* Floating Task Icon */
+.floating-task-icon {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 60px;
+    height: 60px;
+    background: #28a745;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(40, 167, 69, 0.4);
+    transition: all 0.3s ease;
+    z-index: 1000;
+}
+
+.floating-task-icon:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 25px rgba(40, 167, 69, 0.6);
+}
+
+.task-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #dc3545;
+    color: white;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+/* Floating Task Panel */
+.floating-task-panel {
+    position: fixed;
+    bottom: 100px;
+    right: 30px;
+    width: 320px;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    z-index: 999;
+    transform: translateY(20px);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.floating-task-panel.active {
+    transform: translateY(0);
+    opacity: 1;
+    visibility: visible;
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #eee;
+}
+
+.panel-header h4 {
+    margin: 0;
+    color: #333;
+}
+
+.close-panel {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    color: #666;
+    cursor: pointer;
+}
+
+.panel-content {
+    padding: 1rem 1.5rem;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.quick-tasks {
+    margin-bottom: 1.5rem;
+}
+
+.quick-tasks h5 {
+    margin: 0 0 1rem 0;
+    color: #333;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.quick-task-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.quick-task-item:last-child {
+    border-bottom: none;
+}
+
+.quick-task-info strong {
+    display: block;
+    color: #333;
+    font-size: 0.9rem;
+}
+
+.quick-task-info small {
+    color: #666;
+    font-size: 0.8rem;
+}
+
+.quick-start-btn, .quick-complete-btn {
+    padding: 4px 12px;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.quick-start-btn {
+    background: #17a2b8;
+    color: white;
+}
+
+.quick-start-btn:hover {
+    background: #138496;
+}
+
+.quick-complete-btn {
+    background: #28a745;
+    color: white;
+}
+
+.quick-complete-btn:hover {
+    background: #218838;
+}
+
+.no-quick-tasks {
+    text-align: center;
+    padding: 2rem 1rem;
+    color: #666;
+}
+
+.no-quick-tasks i {
+    font-size: 2rem;
+    color: #28a745;
+    margin-bottom: 1rem;
+}
+
+.quick-priority {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-top: 0.25rem;
+    padding: 2px 6px;
+    border-radius: 8px;
+}
+
+.quick-priority.priority-high {
+    background: #ffebee;
+    color: #c62828;
+}
+
+.quick-priority.priority-medium {
+    background: #fff3e0;
+    color: #ef6c00;
+}
+
+.quick-priority.priority-low {
+    background: #e8f5e8;
+    color: #2e7d32;
+}
+
+/* Task Image Modal */
+.task-image-modal {
+    display: none;
+    position: fixed;
+    z-index: 2000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.8);
+}
+
+.task-modal-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    max-width: 90%;
+    max-height: 90%;
+    text-align: center;
+}
+
+.task-modal-content img {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+}
+
+.task-modal-caption {
+    color: white;
+    margin-top: 1rem;
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+.close-task-modal {
+    position: absolute;
+    top: 15px;
+    right: 35px;
+    color: white;
+    font-size: 40px;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 2001;
+}
+
+.close-task-modal:hover {
+    opacity: 0.7;
+}
+
+.image-modal {
+    display: none;
+    position: fixed;
+    z-index: 2000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.8);
+}
+
+.image-modal .modal-content {
+    background: white;
+    margin: 5% auto;
+    border-radius: 15px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+}
+
+.image-modal .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid #eee;
+}
+
+.image-modal .modal-header h3 {
+    margin: 0;
+    color: #333;
+}
+
+.image-modal .close {
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #666;
+}
+
+.image-modal .close:hover {
+    color: #333;
+}
+
+.image-modal .modal-body {
+    padding: 1.5rem;
+}
+
+.camera-section {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.image-preview {
+    border: 2px dashed #ddd;
+    border-radius: 10px;
+    padding: 2rem;
+    margin-bottom: 1rem;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.image-preview.has-image {
+    border-color: #28a745;
+    padding: 0;
+}
+
+.image-preview i {
+    font-size: 3rem;
+    color: #ddd;
+    margin-bottom: 1rem;
+}
+
+.image-preview p {
+    color: #666;
+    margin: 0;
+}
+
+.image-preview img {
+    max-width: 100%;
+    max-height: 300px;
+    border-radius: 10px;
+    object-fit: cover;
+}
+
+.capture-btn {
+    background: #17a2b8;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: background 0.3s;
+}
+
+.capture-btn:hover {
+    background: #138496;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    border-top: 1px solid #eee;
+    padding-top: 1rem;
+}
+
+.modal-actions button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: background 0.3s;
+}
+
+.modal-actions button[type="button"]:first-child {
+    background: #6c757d;
+    color: white;
+}
+
+.modal-actions button[type="button"]:first-child:hover {
+    background: #5a6268;
+}
+
+.modal-actions button:last-child {
+    background: #28a745;
+    color: white;
+}
+
+.modal-actions button:last-child:hover:not(:disabled) {
+    background: #218838;
+}
+
+.modal-actions button:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.captured-images {
+    display: flex;
+    gap: 1rem;
+    margin: 1rem 0;
+    flex-wrap: wrap;
+    padding: 0.5rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.captured-image {
+    text-align: center;
+}
+
+.captured-image img {
+    width: 120px;
+    height: 90px;
+    object-fit: cover;
+    border-radius: 8px;
+    cursor: pointer;
+    border: 2px solid #28a745;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: transform 0.3s;
+}
+
+.captured-image img:hover {
+    transform: scale(1.05);
+}
+
+.captured-image .image-type {
+    font-size: 0.7rem;
+    color: #28a745;
+    font-weight: 600;
+    margin-top: 0.25rem;
+}
+
+.capture-after-btn {
+    background: #17a2b8;
+    color: white;
+}
+
+.capture-after-btn:hover {
+    background: #138496;
+}
+
+.retake-btn {
+    background: #ffc107;
+    color: #212529;
+}
+
+.retake-btn:hover {
+    background: #e0a800;
+}
+
+@media (max-width: 768px) {
+    .dashboard-header h1 {
+        font-size: 2rem;
+    }
+    
+    .nav-cards {
+        grid-template-columns: 1fr;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .task-item {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+    }
+    
+    .task-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .task-actions {
+        flex-direction: column;
+        width: 100%;
+        gap: 0.5rem;
+    }
+    
+    .action-btn {
+        width: 100%;
+        min-width: auto;
+    }
+    
+    .captured-images {
+        justify-content: center;
+    }
+    
+    .captured-image img {
+        width: 100px;
+        height: 75px;
+    }
+    
+    .floating-task-panel {
+        right: 15px;
+        left: 15px;
+        width: auto;
+    }
+    
+    .floating-task-icon {
+        right: 20px;
+        bottom: 20px;
+    }
+    
+    .task-image img {
+        max-width: 150px;
+        max-height: 100px;
+    }
+}
+</style>
+
+<script>
+let currentTaskId = null;
+let currentImageType = null;
+let capturedImageData = null;
+
+function startTaskWithImage(reportId) {
+    currentTaskId = reportId;
+    currentImageType = 'before';
+    document.getElementById('imageModalTitle').textContent = 'Capture Before Image';
+    document.getElementById('imageCaptureModal').style.display = 'block';
+    document.body.style.overflow = 'hidden';
+}
+
+function completeTaskWithImage(reportId) {
+    currentTaskId = reportId;
+    currentImageType = 'after';
+    document.getElementById('imageModalTitle').textContent = 'Capture After Image';
+    document.getElementById('imageCaptureModal').style.display = 'block';
+    document.body.style.overflow = 'hidden';
+}
+
+function markTaskComplete(reportId) {
+    updateStatus(reportId, 'completed');
+}
+
+let cameraStream = null;
+
+function startCamera() {
+    const video = document.getElementById('cameraVideo');
+    const preview = document.getElementById('imagePreview');
+    
+    navigator.mediaDevices.getUserMedia({ 
+        video: { 
+            facingMode: 'environment',
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+        } 
+    })
+    .then(function(stream) {
+        cameraStream = stream;
+        video.srcObject = stream;
+        video.style.display = 'block';
+        preview.style.display = 'none';
+        document.getElementById('startCameraBtn').style.display = 'none';
+        document.getElementById('takePictureBtn').style.display = 'inline-block';
+    })
+    .catch(function(error) {
+        alert('Camera access denied or not available: ' + error.message);
+    });
+}
+
+function takePicture() {
+    const video = document.getElementById('cameraVideo');
+    const canvas = document.getElementById('cameraCanvas');
+    const preview = document.getElementById('imagePreview');
+    const context = canvas.getContext('2d');
+    
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    context.drawImage(video, 0, 0);
+    
+    capturedImageData = canvas.toDataURL('image/jpeg', 0.8);
+    
+    preview.innerHTML = `<img src="${capturedImageData}" alt="Captured Image">`;
+    preview.classList.add('has-image');
+    preview.style.display = 'block';
+    
+    video.style.display = 'none';
+    document.getElementById('takePictureBtn').style.display = 'none';
+    document.getElementById('startCameraBtn').style.display = 'inline-block';
+    document.getElementById('saveImageBtn').disabled = false;
+    
+    // Stop camera stream
+    if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+        cameraStream = null;
+    }
+}
+
+function closeImageModal() {
+    document.getElementById('imageCaptureModal').style.display = 'none';
+    document.body.style.overflow = 'auto';
+    resetImageModal();
+}
+
+function resetImageModal() {
+    const video = document.getElementById('cameraVideo');
+    const preview = document.getElementById('imagePreview');
+    
+    if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+        cameraStream = null;
+    }
+    
+    video.style.display = 'none';
+    preview.innerHTML = '<i class="fas fa-camera"></i><p>Take a photo with camera</p>';
+    preview.classList.remove('has-image');
+    preview.style.display = 'block';
+    document.getElementById('startCameraBtn').style.display = 'inline-block';
+    document.getElementById('takePictureBtn').style.display = 'none';
+    document.getElementById('saveImageBtn').disabled = true;
+    capturedImageData = null;
+    currentTaskId = null;
+    currentImageType = null;
+}
+
+function saveImage() {
+    if (!capturedImageData || !currentTaskId || !currentImageType) {
+        alert('Please capture an image first.');
+        return;
+    }
+    
+    try {
+        const timestamp = new Date().toLocaleString();
+        
+        // Store image data locally
+        const imageKey = `task_${currentTaskId}_${currentImageType}`;
+        const imageInfo = {
+            data: capturedImageData,
+            timestamp: timestamp,
+            type: currentImageType
+        };
+        
+        localStorage.setItem(imageKey, JSON.stringify(imageInfo));
+        
+        // Store current values before closing modal
+        const taskId = currentTaskId;
+        const imageType = currentImageType;
+        
+        closeImageModal();
+        
+        // Update task status or show complete button
+        if (imageType === 'before') {
+            currentImageType = imageType; // Restore for status message
+            updateStatus(taskId, 'in_progress');
+        } else {
+            // After image captured, show Mark Complete and Retake buttons
+            const captureBtn = document.getElementById(`captureAfter${taskId}`);
+            const retakeBtn = document.getElementById(`retakeAfter${taskId}`);
+            const completeBtn = document.getElementById(`markComplete${taskId}`);
+            if (captureBtn && retakeBtn && completeBtn) {
+                captureBtn.style.display = 'none';
+                retakeBtn.style.display = 'inline-block';
+                completeBtn.style.display = 'inline-block';
+            }
+            alert('After image captured! You can retake if needed or mark the task as complete.');
+            displayCapturedImages(); // Refresh images display
+        }
+        
+    } catch (error) {
+        console.error('Save image error:', error);
+        alert('Error saving image. Please try again.');
+    }
+}
+
+function updateStatus(reportId, newStatus) {
+    fetch('/crew-update-status/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            report_id: reportId,
+            status: newStatus
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const imageMsg = currentImageType ? ` (${currentImageType} image captured)` : '';
+            alert(data.message + imageMsg);
+            currentImageType = null; // Reset to prevent error
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Status update error:', error);
+        alert('Error updating status. Please try again.');
+    });
+}
+
+// Handle modal events and display captured images
+document.addEventListener('DOMContentLoaded', function() {
+    // Close modal when clicking outside
+    document.getElementById('imageCaptureModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeImageModal();
+        }
+    });
+    
+    // Display captured images for all tasks
+    displayCapturedImages();
+});
+
+function displayCapturedImages() {
+    // Get all task containers
+    const taskContainers = document.querySelectorAll('[id^="capturedImages"]');
+    
+    taskContainers.forEach(container => {
+        const taskId = container.id.replace('capturedImages', '');
+        const beforeKey = `task_${taskId}_before`;
+        const afterKey = `task_${taskId}_after`;
+        
+        let imagesHtml = '';
+        
+        // Check for before image
+        const beforeImage = localStorage.getItem(beforeKey);
+        if (beforeImage) {
+            const imageInfo = JSON.parse(beforeImage);
+            imagesHtml += `
+                <div class="captured-image">
+                    <img src="${imageInfo.data}" alt="Before" onclick="openTaskImageModal('${imageInfo.data}', 'Before Image - ${imageInfo.timestamp}')">
+                    <div class="image-type">Before</div>
+                </div>
+            `;
+        }
+        
+        // Check for after image
+        const afterImage = localStorage.getItem(afterKey);
+        if (afterImage) {
+            const imageInfo = JSON.parse(afterImage);
+            imagesHtml += `
+                <div class="captured-image">
+                    <img src="${imageInfo.data}" alt="After" onclick="openTaskImageModal('${imageInfo.data}', 'After Image - ${imageInfo.timestamp}')">
+                    <div class="image-type">After</div>
+                </div>
+            `;
+            
+            // Show Mark Complete and Retake buttons, hide initial Capture button
+            const captureBtn = document.getElementById(`captureAfter${taskId}`);
+            const retakeBtn = document.getElementById(`retakeAfter${taskId}`);
+            const completeBtn = document.getElementById(`markComplete${taskId}`);
+            if (captureBtn && retakeBtn && completeBtn) {
+                captureBtn.style.display = 'none';
+                retakeBtn.style.display = 'inline-block';
+                completeBtn.style.display = 'inline-block';
+            }
+        }
+        
+        container.innerHTML = imagesHtml;
+    });
+}
+
+function toggleTaskPanel() {
+    const panel = document.getElementById('taskPanel');
+    panel.classList.toggle('active');
+}
+
+function viewLocation(latitude, longitude, location) {
+    if (latitude && longitude) {
+        // Try to open in Google Maps app first, fallback to web
+        const googleMapsUrl = `https://www.google.com/maps?q=${latitude},${longitude}`;
+        const mapsAppUrl = `geo:${latitude},${longitude}?q=${latitude},${longitude}(${encodeURIComponent(location)})`;
+        
+        // For mobile devices, try to open in maps app
+        if (/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+            window.open(mapsAppUrl, '_blank');
+            // Fallback to Google Maps web if app doesn't open
+            setTimeout(() => {
+                window.open(googleMapsUrl, '_blank');
+            }, 1000);
+        } else {
+            window.open(googleMapsUrl, '_blank');
+        }
+    } else {
+        alert('Location coordinates not available for this task.');
+    }
+}
+
+function openTaskImageModal(imageSrc, location) {
+    const modal = document.getElementById('taskImageModal') || createTaskImageModal();
+    const modalImg = modal.querySelector('.task-modal-image');
+    const caption = modal.querySelector('.task-modal-caption');
+    
+    modal.style.display = 'block';
+    modalImg.src = imageSrc;
+    caption.textContent = `Waste reported at: ${location}`;
+}
+
+function closeTaskImageModal() {
+    const modal = document.getElementById('taskImageModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+function createTaskImageModal() {
+    const modal = document.createElement('div');
+    modal.id = 'taskImageModal';
+    modal.className = 'task-image-modal';
+    modal.innerHTML = `
+        <span class="close-task-modal" onclick="closeTaskImageModal()">&times;</span>
+        <div class="task-modal-content">
+            <img class="task-modal-image" src="" alt="Task Photo">
+            <div class="task-modal-caption"></div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    
+    // Close modal when clicking outside the image
+    modal.addEventListener('click', function(event) {
+        if (event.target === modal) {
+            closeTaskImageModal();
+        }
+    });
+    
+    return modal;
+}
+
+// Close panel when clicking outside
+document.addEventListener('click', function(event) {
+    const panel = document.getElementById('taskPanel');
+    const icon = document.querySelector('.floating-task-icon');
+    
+    if (!panel.contains(event.target) && !icon.contains(event.target)) {
+        panel.classList.remove('active');
+    }
+});
+
+// Add keyboard support for modal
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        closeTaskImageModal();
+    }
+});
+
+function redeemPoints() {
+    window.location.href = '/redeem-points/';
+}
+
+function scrollToAssignments() {
+    const assignmentsSection = document.querySelector('.task-section h2');
+    if (assignmentsSection && assignmentsSection.textContent === 'New Assignments') {
+        assignmentsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+}
+
+
+</script>
+{% endblock %}

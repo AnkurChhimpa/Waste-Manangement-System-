@@ -1,0 +1,727 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Crew Management - Trashify{% endblock %}
+
+{% block content %}
+<div class="admin-crew">
+    <div class="dashboard-header">
+        <div class="container">
+            <a href="/admin-dashboard/" class="back-btn">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </a>
+            <h1>Crew Management</h1>
+            <p>Manage crew members and their access</p>
+        </div>
+    </div>
+
+    <div class="crew-actions">
+        <div class="container">
+            <button class="add-crew-btn" onclick="openAddCrewModal()">
+                <i class="fas fa-plus"></i> Add New Crew Member
+            </button>
+        </div>
+    </div>
+
+    <div class="crew-list">
+        <div class="container">
+            <div class="crew-header">
+                <h2>Current Crew Members</h2>
+                <div class="search-container">
+                    <input type="text" id="crewSearch" placeholder="Search by username or employee ID..." onkeyup="searchCrew()">
+                    <i class="fas fa-search search-icon"></i>
+                </div>
+            </div>
+            <div class="crew-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Employee ID</th>
+                            <th>Phone</th>
+                            <th>Status</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for crew in crew_members %}
+                        <tr class="crew-row" data-username="{{ crew.user.username|lower }}" data-employee-id="{{ crew.employee_id|lower }}">
+                            <td>{{ crew.user.username }}</td>
+                            <td>{{ crew.employee_id }}</td>
+                            <td>{{ crew.phone|default:"N/A" }}</td>
+                            <td>
+                                <span class="status {% if crew.is_active %}active{% else %}inactive{% endif %}">
+                                    {% if crew.is_active %}Active{% else %}Inactive{% endif %}
+                                </span>
+                            </td>
+                            <td>{{ crew.created_at|date:"M d, Y" }}</td>
+                            <td>
+                                <button class="edit-btn" onclick="editCrew({{ crew.id }}, '{{ crew.user.username }}', '{{ crew.employee_id }}', '{{ crew.phone|default:"" }}', {{ crew.is_active|yesno:"true,false" }})">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="toggle-btn" onclick="toggleCrewStatus({{ crew.id }}, {{ crew.is_active|yesno:"false,true" }})">
+                                    {% if crew.is_active %}
+                                    <i class="fas fa-pause"></i>
+                                    {% else %}
+                                    <i class="fas fa-play"></i>
+                                    {% endif %}
+                                </button>
+                                <button class="delete-btn" onclick="deleteCrewMember({{ crew.id }}, '{{ crew.user.username|escapejs }}')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                <button class="reset-pwd-btn" onclick="resetPassword({{ crew.user.id }}, '{{ crew.user.username }}')">
+                                    <i class="fas fa-key"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="no-data">No crew members found</td>
+                        </tr>
+                        {% endfor %}
+                        <tr id="noSearchResults" class="no-data" style="display: none;">
+                            <td colspan="6">No crew found matching your search</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Crew Modal -->
+<div id="addCrewModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Add New Crew Member</h3>
+            <span class="close" onclick="closeAddCrewModal()">&times;</span>
+        </div>
+        <form id="addCrewForm">
+            <div class="form-group">
+                <label for="username">Username:</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required>
+                <button type="button" class="generate-pwd-btn" onclick="generatePassword()">
+                    <i class="fas fa-random"></i> Generate
+                </button>
+            </div>
+            <div class="form-group">
+                <label for="employee_id">Employee ID:</label>
+                <input type="text" id="employee_id" name="employee_id" required>
+            </div>
+            <div class="form-group">
+                <label for="phone">Phone (Optional):</label>
+                <input type="text" id="phone" name="phone" maxlength="10" pattern="[0-9]{10}" title="Phone number must be exactly 10 digits" oninput="validatePhone(this)">
+            </div>
+            <div class="form-actions">
+                <button type="button" onclick="closeAddCrewModal()">Cancel</button>
+                <button type="submit">Create Crew Member</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Crew Modal -->
+<div id="editCrewModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Edit Crew Member</h3>
+            <span class="close" onclick="closeEditCrewModal()">&times;</span>
+        </div>
+        <form id="editCrewForm">
+            <input type="hidden" id="edit_crew_id" name="crew_id">
+            <div class="form-group">
+                <label for="edit_username">Username:</label>
+                <input type="text" id="edit_username" name="username" required>
+            </div>
+            <div class="form-group">
+                <label for="edit_employee_id">Employee ID:</label>
+                <input type="text" id="edit_employee_id" name="employee_id" required>
+            </div>
+            <div class="form-group">
+                <label for="edit_phone">Phone:</label>
+                <input type="text" id="edit_phone" name="phone" maxlength="10" pattern="[0-9]{10}" title="Phone number must be exactly 10 digits" oninput="validatePhone(this)">
+            </div>
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="edit_is_active" name="is_active"> Active
+                </label>
+            </div>
+            <div class="form-actions">
+                <button type="button" onclick="closeEditCrewModal()">Cancel</button>
+                <button type="submit">Update Crew Member</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.admin-crew {
+    margin-top: 65px;
+    min-height: calc(100vh - 65px);
+}
+
+.dashboard-header {
+    background: linear-gradient(135deg, #dc3545, #fd7e14);
+    color: white;
+    padding: 4rem 0;
+    text-align: center;
+}
+
+.back-btn {
+    color: white;
+    text-decoration: none;
+    margin-bottom: 1rem;
+    display: inline-block;
+    opacity: 0.9;
+}
+
+.dashboard-header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.crew-actions {
+    padding: 2rem 0;
+    background: #f8f9fa;
+}
+
+.add-crew-btn {
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.add-crew-btn:hover {
+    background: #218838;
+}
+
+.crew-list {
+    padding: 2rem 0;
+    background: white;
+}
+
+.crew-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.crew-list h2 {
+    margin: 0;
+    color: #333;
+}
+
+.search-container {
+    position: relative;
+    width: 300px;
+}
+
+.search-container input {
+    width: 100%;
+    padding: 10px 40px 10px 15px;
+    border: 2px solid #e9ecef;
+    border-radius: 25px;
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.3s;
+}
+
+.search-container input:focus {
+    border-color: #28a745;
+}
+
+.search-icon {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #666;
+    pointer-events: none;
+}
+
+.crew-table {
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+}
+
+.crew-table table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.crew-table th,
+.crew-table td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+.crew-table th {
+    background: #f8f9fa;
+    font-weight: 600;
+    color: #333;
+}
+
+.status {
+    padding: 4px 12px;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status.active {
+    background: #e8f5e8;
+    color: #2e7d32;
+}
+
+.status.inactive {
+    background: #ffebee;
+    color: #c62828;
+}
+
+.edit-btn, .toggle-btn, .delete-btn, .reset-pwd-btn {
+    background: none;
+    border: none;
+    padding: 8px;
+    margin: 0 4px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.edit-btn {
+    color: #17a2b8;
+}
+
+.edit-btn:hover {
+    background: #e3f2fd;
+}
+
+.toggle-btn {
+    color: #ffc107;
+}
+
+.toggle-btn:hover {
+    background: #fff3cd;
+}
+
+.delete-btn {
+    color: #dc3545;
+}
+
+.delete-btn:hover {
+    background: #ffebee;
+}
+
+.reset-pwd-btn {
+    color: #6c757d;
+}
+
+.reset-pwd-btn:hover {
+    background: #f8f9fa;
+}
+
+.no-data {
+    text-align: center;
+    color: #666;
+    font-style: italic;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+}
+
+.modal-content {
+    background: white;
+    margin: 5% auto;
+    padding: 0;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid #eee;
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: #333;
+}
+
+.close {
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #666;
+}
+
+.close:hover {
+    color: #333;
+}
+
+.modal form {
+    padding: 1.5rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+    position: relative;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 1rem;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #28a745;
+}
+
+.generate-pwd-btn {
+    position: absolute;
+    right: 10px;
+    top: 32px;
+    background: #17a2b8;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    cursor: pointer;
+}
+
+.generate-pwd-btn:hover {
+    background: #138496;
+}
+
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 2rem;
+}
+
+.form-actions button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.form-actions button[type="button"] {
+    background: #6c757d;
+    color: white;
+}
+
+.form-actions button[type="button"]:hover {
+    background: #5a6268;
+}
+
+.form-actions button[type="submit"] {
+    background: #28a745;
+    color: white;
+}
+
+.form-actions button[type="submit"]:hover {
+    background: #218838;
+}
+
+@media (max-width: 768px) {
+    .crew-table {
+        overflow-x: auto;
+    }
+    
+    .crew-header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: stretch;
+    }
+    
+    .search-container {
+        width: 100%;
+    }
+    
+    .modal-content {
+        width: 95%;
+        margin: 10% auto;
+    }
+}
+</style>
+
+<script>
+function openAddCrewModal() {
+    document.getElementById('addCrewModal').style.display = 'block';
+}
+
+function closeAddCrewModal() {
+    document.getElementById('addCrewModal').style.display = 'none';
+    document.getElementById('addCrewForm').reset();
+}
+
+function openEditCrewModal() {
+    document.getElementById('editCrewModal').style.display = 'block';
+}
+
+function closeEditCrewModal() {
+    document.getElementById('editCrewModal').style.display = 'none';
+    document.getElementById('editCrewForm').reset();
+}
+
+function generatePassword() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let password = '';
+    for (let i = 0; i < 8; i++) {
+        password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    document.getElementById('password').value = password;
+}
+
+function editCrew(crewId, username, employeeId, phone, isActive) {
+    document.getElementById('edit_crew_id').value = crewId;
+    document.getElementById('edit_username').value = username;
+    document.getElementById('edit_employee_id').value = employeeId;
+    document.getElementById('edit_phone').value = phone;
+    document.getElementById('edit_is_active').checked = isActive;
+    openEditCrewModal();
+}
+
+function toggleCrewStatus(crewId, newStatus) {
+    if (confirm('Are you sure you want to change this crew member\'s status?')) {
+        fetch('/admin-crew-toggle/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                crew_id: crewId,
+                is_active: newStatus
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            alert('Error updating status. Please try again.');
+        });
+    }
+}
+
+function deleteCrewMember(crewId, username) {
+    if (confirm(`Are you sure you want to delete crew member "${username}"? This will permanently remove their account and cannot be undone.`)) {
+        fetch('/delete-crew-member/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ crew_id: crewId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            alert('Error deleting crew member. Please try again.');
+        });
+    }
+}
+
+function resetPassword(userId, username) {
+    const newPassword = prompt(`Enter new password for ${username}:`);
+    if (newPassword && newPassword.length >= 3) {
+        fetch('/admin-crew-reset-password/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                user_id: userId,
+                new_password: newPassword
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            alert('Error resetting password. Please try again.');
+        });
+    } else if (newPassword !== null) {
+        alert('Password must be at least 3 characters long.');
+    }
+}
+
+// Form submissions
+document.getElementById('addCrewForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const data = {
+        username: formData.get('username'),
+        password: formData.get('password'),
+        employee_id: formData.get('employee_id'),
+        phone: formData.get('phone')
+    };
+    
+    fetch('/admin-crew-add/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            closeAddCrewModal();
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        alert('Error creating crew member. Please try again.');
+    });
+});
+
+document.getElementById('editCrewForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const data = {
+        crew_id: formData.get('crew_id'),
+        username: formData.get('username'),
+        employee_id: formData.get('employee_id'),
+        phone: formData.get('phone'),
+        is_active: document.getElementById('edit_is_active').checked
+    };
+    
+    fetch('/admin-crew-edit/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            closeEditCrewModal();
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        alert('Error updating crew member. Please try again.');
+    });
+});
+
+function validatePhone(input) {
+    // Remove any non-digit characters
+    input.value = input.value.replace(/[^0-9]/g, '');
+    
+    // Limit to 10 digits
+    if (input.value.length > 10) {
+        input.value = input.value.slice(0, 10);
+    }
+}
+
+function searchCrew() {
+    const searchValue = document.getElementById('crewSearch').value.toLowerCase();
+    const crewRows = document.querySelectorAll('.crew-row');
+    const noResultsRow = document.getElementById('noSearchResults');
+    let hasVisibleRows = false;
+    
+    crewRows.forEach(row => {
+        const username = row.dataset.username;
+        const employeeId = row.dataset.employeeId;
+        
+        if (username.includes(searchValue) || employeeId.includes(searchValue)) {
+            row.style.display = '';
+            hasVisibleRows = true;
+        } else {
+            row.style.display = 'none';
+        }
+    });
+    
+    // Show/hide no results message
+    if (searchValue && !hasVisibleRows) {
+        noResultsRow.style.display = '';
+    } else {
+        noResultsRow.style.display = 'none';
+    }
+}
+
+// Close modals when clicking outside
+window.onclick = function(event) {
+    const addModal = document.getElementById('addCrewModal');
+    const editModal = document.getElementById('editCrewModal');
+    
+    if (event.target == addModal) {
+        closeAddCrewModal();
+    }
+    if (event.target == editModal) {
+        closeEditCrewModal();
+    }
+}
+</script>
+{% endblock %}

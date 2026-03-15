@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block title %}Join Now - Trashify{% endblock %}
+
+{% block content %}
+<main class="auth-page">
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <h2>🌱 Join Now</h2>
+                <p>Join the environmental movement</p>
+            </div>
+            
+            <form class="auth-form">
+                <div class="form-group">
+                    <input type="text" placeholder="Full Name" required>
+                </div>
+                <div class="form-group">
+                    <input type="email" placeholder="Email" required>
+                </div>
+                <div class="form-group">
+                    <input type="password" placeholder="Password" required>
+                </div>
+                <div class="form-group">
+                    <input type="password" placeholder="Confirm Password" required>
+                </div>
+                <button type="submit" class="btn-submit">Join Now</button>
+            </form>
+            
+            <div class="auth-footer">
+                <p>Already have an account? <a href="/signin">Sign In</a></p>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}

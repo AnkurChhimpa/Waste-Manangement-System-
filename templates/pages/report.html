@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block title %}Trashify - Report Waste{% endblock %}
+
+{% block content %}
+<!-- Report Waste Page -->
+<main id="report" class="page">
+    <div class="container">
+        <div class="page-header">
+            <h1>Report Waste</h1>
+            <p>Help make your community cleaner by reporting waste</p>
+        </div>
+
+        <form id="wasteReportForm" class="report-form">
+            <div class="form-group">
+                <label for="wastePhoto">Upload Waste Photo</label>
+                <div class="file-upload">
+                    <input type="file" id="wastePhoto" accept="image/*" required>
+                    <div class="file-upload-display">
+                        <span class="upload-icon">📷</span>
+                        <span class="upload-text">Click to upload photo</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="location">Location</label>
+                <div class="location-input">
+                    <input type="text" id="location" placeholder="Enter location or use current location" required>
+                    <button type="button" class="btn btn-outline" onclick="useCurrentLocation()">Use My Location</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="wasteType">Waste Type</label>
+                <select id="wasteType" required>
+                    <option value="">Select waste type</option>
+                    <option value="Plastic">Plastic</option>
+                    <option value="Organic">Organic</option>
+                    <option value="E-Waste">E-Waste</option>
+                    <option value="Paper">Paper</option>
+                    <option value="Metal">Metal</option>
+                    <option value="Glass">Glass</option>
+                    <option value="Hazardous">Hazardous</option>
+                    <option value="Construction">Construction</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-full">Submit Report</button>
+        </form>
+    </div>
+</main>
+{% endblock %}

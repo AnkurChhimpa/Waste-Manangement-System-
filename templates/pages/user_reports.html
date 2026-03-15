@@ -1,0 +1,347 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Reports - Trashify{% endblock %}
+
+{% block content %}
+<div class="user-reports-page">
+    <div class="page-header">
+        <div class="container">
+            <a href="/user-dashboard/" class="back-btn">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </a>
+            <h1>My Reports</h1>
+            <p>All waste reports you have submitted</p>
+        </div>
+    </div>
+
+    <div class="reports-content">
+        <div class="container">
+            <div class="reports-summary">
+                <div class="summary-card">
+                    <h3>{{ total_count }}</h3>
+                    <p>Total Reports</p>
+                </div>
+            </div>
+
+            <div class="reports-list">
+                {% for report in user_reports %}
+                <div class="report-item">
+                    <div class="report-image">
+                        {% if report.image %}
+                        <img src="{{ report.image }}" alt="Waste Photo" onclick="openImageModal('{{ report.image }}')" />
+                        {% else %}
+                        <div class="no-image">
+                            <i class="fas fa-image"></i>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="report-details">
+                        <div class="report-header">
+                            <h4>{{ report.get_waste_type_display }}</h4>
+                            <div class="status-badge {{ report.status }}">{{ report.get_status_display }}</div>
+                        </div>
+                        <div class="report-info">
+                            <p><i class="fas fa-map-marker-alt"></i> {{ report.location }}</p>
+                            <p><i class="fas fa-clock"></i> {{ report.created_at|date:"M d, Y H:i" }}</p>
+                            <p><i class="fas fa-exclamation-triangle"></i> {{ report.get_severity_display }} Priority</p>
+                        </div>
+                        <div class="report-description">
+                            {{ report.description|truncatewords:15 }}
+                        </div>
+                        {% if report.assigned_volunteer %}
+                        <div class="assigned-info">
+                            <i class="fas fa-user"></i> Assigned to: {{ report.assigned_volunteer.username }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <div class="no-reports">
+                    <i class="fas fa-clipboard-list"></i>
+                    <h3>No reports yet</h3>
+                    <p>You haven't submitted any waste reports yet.</p>
+                    <a href="/report-waste/" class="report-btn">Submit Your First Report</a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Image Modal -->
+<div id="imageModal" class="image-modal">
+    <span class="close-modal" onclick="closeImageModal()">&times;</span>
+    <div class="modal-content">
+        <img id="modalImage" src="" alt="Waste Photo">
+    </div>
+</div>
+
+<style>
+.user-reports-page {
+    margin-top: 65px;
+    min-height: calc(100vh - 65px);
+}
+
+.page-header {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+    padding: 3rem 0;
+}
+
+.back-btn {
+    color: white;
+    text-decoration: none;
+    margin-bottom: 1rem;
+    display: inline-block;
+    opacity: 0.9;
+    transition: opacity 0.3s;
+}
+
+.back-btn:hover {
+    opacity: 1;
+}
+
+.page-header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.reports-content {
+    padding: 4rem 0;
+    background: #f8f9fa;
+}
+
+.reports-summary {
+    margin-bottom: 3rem;
+}
+
+.summary-card {
+    background: white;
+    padding: 2rem;
+    border-radius: 15px;
+    text-align: center;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    display: inline-block;
+}
+
+.summary-card h3 {
+    font-size: 2.5rem;
+    color: #28a745;
+    margin: 0 0 0.5rem 0;
+}
+
+.summary-card p {
+    color: #666;
+    margin: 0;
+    text-transform: uppercase;
+    font-size: 0.9rem;
+}
+
+.reports-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.report-item {
+    background: white;
+    border-radius: 15px;
+    padding: 2rem;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    gap: 2rem;
+    align-items: start;
+}
+
+.report-image img {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: transform 0.3s;
+}
+
+.report-image img:hover {
+    transform: scale(1.05);
+}
+
+.no-image {
+    width: 100px;
+    height: 100px;
+    background: #f8f9fa;
+    border: 2px dashed #dee2e6;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #666;
+    font-size: 2rem;
+}
+
+.report-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.report-header h4 {
+    margin: 0;
+    color: #333;
+    font-size: 1.2rem;
+}
+
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-badge.pending { background: #fff3cd; color: #856404; }
+.status-badge.assigned { background: #cce5ff; color: #0056b3; }
+.status-badge.in_progress { background: #cce5ff; color: #0056b3; }
+.status-badge.completed { background: #d4edda; color: #155724; }
+
+.report-info {
+    margin-bottom: 1rem;
+}
+
+.report-info p {
+    margin: 0.5rem 0;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.report-info i {
+    width: 16px;
+    margin-right: 0.5rem;
+    color: #28a745;
+}
+
+.report-description {
+    color: #555;
+    line-height: 1.5;
+    margin-bottom: 1rem;
+}
+
+.assigned-info {
+    color: #17a2b8;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.assigned-info i {
+    margin-right: 0.5rem;
+}
+
+.no-reports {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: #666;
+}
+
+.no-reports i {
+    font-size: 4rem;
+    color: #dee2e6;
+    margin-bottom: 1rem;
+}
+
+.no-reports h3 {
+    color: #333;
+    margin-bottom: 1rem;
+}
+
+.report-btn {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: 600;
+    display: inline-block;
+    margin-top: 1rem;
+    transition: transform 0.3s;
+}
+
+.report-btn:hover {
+    transform: translateY(-2px);
+}
+
+.image-modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.8);
+}
+
+.modal-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    max-width: 90%;
+    max-height: 90%;
+}
+
+.modal-content img {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+}
+
+.close-modal {
+    position: absolute;
+    top: 15px;
+    right: 35px;
+    color: white;
+    font-size: 40px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close-modal:hover {
+    opacity: 0.7;
+}
+
+@media (max-width: 768px) {
+    .report-item {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .report-image {
+        text-align: center;
+    }
+}
+</style>
+
+<script>
+function openImageModal(imageSrc) {
+    const modal = document.getElementById('imageModal');
+    const modalImg = document.getElementById('modalImage');
+    modal.style.display = 'block';
+    modalImg.src = imageSrc;
+}
+
+function closeImageModal() {
+    document.getElementById('imageModal').style.display = 'none';
+}
+
+window.onclick = function(event) {
+    const modal = document.getElementById('imageModal');
+    if (event.target == modal) {
+        modal.style.display = 'none';
+    }
+}
+</script>
+{% endblock %}

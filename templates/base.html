@@ -1,0 +1,742 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <title>{% block title %}Trashify - Clean Future{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    
+    <!-- PWA Meta Tags -->
+    <link rel="manifest" href="{% static 'manifest.json' %}">
+    <meta name="theme-color" content="#28a745">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Trashify">
+    <link rel="apple-touch-icon" href="{% static 'images/icon-192.png' %}">
+    <meta name="msapplication-TileColor" content="#28a745">
+    <meta name="msapplication-TileImage" content="{% static 'images/icon-192.png' %}">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+        .main-content {
+            margin-top: 70px;
+            min-height: calc(100vh - 70px);
+            padding-top: 10px;
+        }
+        .image-placeholder {
+            opacity: 0.7;
+        }
+        .logo-section img {
+            opacity: 0.9;
+            mix-blend-mode: multiply;
+        }
+        .footer img {
+            opacity: 0.9;
+            mix-blend-mode: multiply;
+        }
+        
+        /* Global mobile optimizations */
+        * {
+            box-sizing: border-box;
+        }
+        
+        html {
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
+        }
+        
+        body {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            overflow-x: hidden;
+        }
+        
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+        
+        /* Mobile-First Responsive Design */
+        @media (max-width: 768px) {
+            /* Base mobile styles */
+            body {
+                font-size: 14px;
+                line-height: 1.5;
+            }
+            
+            /* Container adjustments */
+            .container {
+                padding: 0 1rem !important;
+                max-width: 100% !important;
+            }
+            
+            /* Typography scaling */
+            h1 { font-size: 1.8rem !important; }
+            h2 { font-size: 1.5rem !important; }
+            h3 { font-size: 1.3rem !important; }
+            h4 { font-size: 1.1rem !important; }
+            
+            /* Grid layouts to single column */
+            .content-grid,
+            .features-grid,
+            .roles-grid,
+            .values-grid,
+            .stats-grid,
+            .nav-cards,
+            .contact-grid,
+            .charts-section {
+                grid-template-columns: 1fr !important;
+                gap: 1rem !important;
+            }
+            
+            /* Padding and margin adjustments */
+            .about-hero,
+            .contact-hero,
+            .dashboard-header,
+            .page-header {
+                padding: 2rem 0 !important;
+            }
+            
+            .about-content,
+            .contact-content,
+            .dashboard-content,
+            .leaderboard-content,
+            .features,
+            .roles {
+                padding: 2rem 0 !important;
+            }
+            
+            /* Card adjustments */
+            .feature-card,
+            .role-card,
+            .value-card,
+            .nav-card,
+            .stat-card {
+                padding: 1.5rem !important;
+                margin-bottom: 1rem !important;
+            }
+            
+            /* Button adjustments */
+            .btn,
+            .role-btn,
+            .submit-btn,
+            .btn-hero {
+                padding: 12px 20px !important;
+                font-size: 1rem !important;
+                width: 100% !important;
+                margin-bottom: 0.5rem !important;
+            }
+            
+            /* Hero section adjustments */
+            .hero-title {
+                font-size: 2.5rem !important;
+            }
+            
+            .hero-stats {
+                flex-direction: column !important;
+                gap: 1rem !important;
+                padding: 1rem !important;
+            }
+            
+            .hero-buttons {
+                flex-direction: column !important;
+                gap: 0.5rem !important;
+            }
+            
+            /* Table and list adjustments */
+            .rank-item,
+            .activity-item {
+                grid-template-columns: auto 1fr !important;
+                gap: 0.5rem !important;
+                padding: 1rem !important;
+            }
+            
+            .points,
+            .trend,
+            .activity-status {
+                grid-column: 2 !important;
+                justify-self: end !important;
+                margin-top: 0.5rem !important;
+            }
+            
+            /* Form adjustments */
+            .form-group input,
+            .form-group textarea {
+                padding: 12px !important;
+                font-size: 16px !important; /* Prevents zoom on iOS */
+            }
+            
+            /* Image and media adjustments */
+            .image-placeholder {
+                text-align: center !important;
+                margin: 1rem 0 !important;
+            }
+            
+            .image-placeholder img {
+                max-width: 100% !important;
+                height: auto !important;
+            }
+            
+            /* Podium adjustments for leaderboard */
+            .podium {
+                flex-direction: column !important;
+                align-items: center !important;
+            }
+            
+            .podium-item.first {
+                transform: none !important;
+                order: -1 !important;
+            }
+            
+            /* Navigation adjustments */
+            .nav-links {
+                display: none !important;
+            }
+            
+            .header-actions {
+                flex-wrap: wrap !important;
+            }
+            
+            /* Footer adjustments */
+            .footer-content {
+                text-align: center !important;
+            }
+            
+            .social-links {
+                justify-content: center !important;
+            }
+            
+            /* Modal adjustments */
+            .modal-content {
+                width: 95% !important;
+                margin: 5% auto !important;
+                padding: 1.5rem !important;
+            }
+            
+            /* Floating elements */
+            .floating-icon {
+                font-size: 1rem !important;
+            }
+            
+            /* Touch-friendly sizing */
+            .nav-item,
+            .social-link,
+            .footer-links a {
+                padding: 12px !important;
+                min-height: 44px !important;
+                display: flex !important;
+                align-items: center !important;
+            }
+            
+            /* Mobile navigation improvements */
+            .nav-wrapper {
+                flex-wrap: wrap !important;
+                padding: 0 1rem !important;
+            }
+            
+            .logo-section img {
+                height: 40px !important;
+            }
+            
+            /* Mobile text improvements */
+            p, li {
+                line-height: 1.6 !important;
+                margin-bottom: 1rem !important;
+            }
+            
+            /* Mobile spacing */
+            .section {
+                padding: 1rem 0 !important;
+            }
+            
+            /* Mobile cards */
+            .card {
+                border-radius: 8px !important;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+            }
+            
+            /* Mobile lists */
+            ul, ol {
+                padding-left: 1.5rem !important;
+            }
+            
+            /* Mobile tables */
+            table {
+                width: 100% !important;
+                font-size: 0.9rem !important;
+            }
+            
+            /* Mobile overflow handling */
+            .overflow-auto {
+                overflow-x: auto !important;
+                -webkit-overflow-scrolling: touch !important;
+            }
+            
+            /* Mobile animations - reduce for performance */
+            * {
+                animation-duration: 0.3s !important;
+                transition-duration: 0.3s !important;
+            }
+            
+            /* Mobile focus states */
+            input:focus,
+            textarea:focus,
+            select:focus,
+            button:focus {
+                outline: 2px solid #28a745 !important;
+                outline-offset: 2px !important;
+            }
+            
+            /* Mobile sticky elements */
+            .header-nav {
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
+                z-index: 9999 !important;
+            }
+            
+            /* Mobile content spacing */
+            .main-content {
+                margin-top: 80px !important;
+                padding: 10px !important;
+            }
+            
+            /* Mobile footer */
+            .footer {
+                margin-top: 2rem !important;
+                padding: 2rem 0 1rem !important;
+            }
+            
+            /* Mobile utility classes */
+            .mobile-hidden {
+                display: none !important;
+            }
+            
+            .mobile-full-width {
+                width: 100% !important;
+            }
+            
+            .mobile-text-center {
+                text-align: center !important;
+            }
+            
+            /* Mobile performance optimizations */
+            .floating-icons {
+                display: none !important; /* Hide animations on mobile for performance */
+            }
+        }
+        
+        /* Tablet adjustments */
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .container {
+                padding: 0 1.5rem !important;
+            }
+            
+            .content-grid,
+            .contact-grid {
+                grid-template-columns: 1fr !important;
+                gap: 2rem !important;
+            }
+            
+            .features-grid {
+                grid-template-columns: repeat(2, 1fr) !important;
+            }
+            
+            .roles-grid {
+                grid-template-columns: repeat(2, 1fr) !important;
+                max-width: 800px !important;
+                margin: 0 auto !important;
+            }
+        }
+        
+        /* Ensure touch targets are large enough */
+        @media (max-width: 768px) {
+            a, button, input, select, textarea {
+                min-height: 44px;
+                min-width: 44px;
+            }
+            
+            /* Mobile scroll improvements */
+            body {
+                -webkit-overflow-scrolling: touch;
+                scroll-behavior: smooth;
+            }
+            
+            /* Mobile tap highlights */
+            a, button {
+                -webkit-tap-highlight-color: rgba(40, 167, 69, 0.2);
+                -webkit-touch-callout: none;
+                -webkit-user-select: none;
+                user-select: none;
+            }
+            
+            /* Mobile input improvements */
+            input, textarea, select {
+                -webkit-appearance: none;
+                border-radius: 8px;
+                font-size: 16px; /* Prevents zoom on iOS */
+            }
+            
+            /* Mobile safe areas for newer phones */
+            .header-nav {
+                padding-top: env(safe-area-inset-top);
+            }
+            
+            .main-content {
+                padding-left: env(safe-area-inset-left);
+                padding-right: env(safe-area-inset-right);
+            }
+            
+            .footer {
+                padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+            }
+            
+            /* Mobile floating dashboard adjustments */
+            .floating-dashboard-icon {
+                right: 15px !important;
+                top: 80px !important;
+                width: 50px !important;
+                height: 50px !important;
+                font-size: 1.2rem !important;
+            }
+            
+            .dashboard-tooltip {
+                display: none !important;
+            }
+        }
+        
+        /* Floating Dashboard Icon Styles */
+        .floating-dashboard-icon {
+            position: fixed;
+            top: 85px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #28a745, #20c997);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(40, 167, 69, 0.4);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .floating-dashboard-icon:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 25px rgba(40, 167, 69, 0.6);
+        }
+        
+        .dashboard-tooltip {
+            position: absolute;
+            left: -80px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }
+        
+        .dashboard-tooltip::after {
+            content: '';
+            position: absolute;
+            right: -5px;
+            top: 50%;
+            transform: translateY(-50%);
+            border: 5px solid transparent;
+            border-left-color: rgba(0, 0, 0, 0.8);
+        }
+        
+        .floating-dashboard-icon:hover .dashboard-tooltip {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        /* Additional mobile optimizations */
+        @media (max-width: 480px) {
+            /* Extra small screens */
+            .hero-title {
+                font-size: 2rem !important;
+            }
+            
+            .stat-number {
+                font-size: 2rem !important;
+            }
+            
+            .card-icon,
+            .feature-icon {
+                font-size: 2rem !important;
+            }
+            
+            .modal-content {
+                width: 98% !important;
+                margin: 1% auto !important;
+                padding: 1rem !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    {% include 'components/navbar.html' %}
+    
+    <!-- Floating Dashboard Icon for Admin -->
+    {% if user.is_superuser %}
+    <div class="floating-dashboard-icon" onclick="window.location.href='/admin-dashboard/'">
+        <i class="fas fa-cog"></i>
+        <span class="dashboard-tooltip">Admin</span>
+    </div>
+    {% elif is_crew_member %}
+    <div class="floating-dashboard-icon" onclick="window.location.href='/crew-dashboard/'">
+        <i class="fas fa-tachometer-alt"></i>
+        <span class="dashboard-tooltip">Dashboard</span>
+    </div>
+    {% endif %}
+    
+    <div class="main-content">
+        {% block content %}
+        {% endblock %}
+    </div>
+    
+    <!-- Global Popup Modal -->
+    <div class="modal fade" id="globalModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="globalModalTitle">Notification</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="globalModalBody">
+                    Message content here
+                </div>
+                <div class="modal-footer" id="globalModalFooter">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% include 'components/footer.html' %}
+    
+    <!-- Chatbot Widget -->
+    {% include 'chatbot/chat_widget.html' %}
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function showPopup(title, message, type = 'info', callback = null) {
+            const modal = document.getElementById('globalModal');
+            const modalTitle = document.getElementById('globalModalTitle');
+            const modalBody = document.getElementById('globalModalBody');
+            const modalFooter = document.getElementById('globalModalFooter');
+            
+            modalTitle.textContent = title;
+            modalBody.innerHTML = message;
+            
+            let footerHTML = '';
+            if (type === 'success') {
+                modalTitle.className = 'modal-title text-success';
+                footerHTML = '<button type="button" class="btn btn-success" data-bs-dismiss="modal">OK</button>';
+            } else if (type === 'error') {
+                modalTitle.className = 'modal-title text-danger';
+                footerHTML = '<button type="button" class="btn btn-danger" data-bs-dismiss="modal">OK</button>';
+            } else if (type === 'confirm') {
+                modalTitle.className = 'modal-title text-warning';
+                footerHTML = '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button type="button" class="btn btn-primary" onclick="confirmAction()">Confirm</button>';
+            } else {
+                modalTitle.className = 'modal-title';
+                footerHTML = '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>';
+            }
+            
+            modalFooter.innerHTML = footerHTML;
+            
+            if (callback) {
+                window.confirmAction = callback;
+            }
+            
+            new bootstrap.Modal(modal).show();
+        }
+        
+        function showSuccess(message) {
+            showPopup('Success', message, 'success');
+        }
+        
+        function showError(message) {
+            showPopup('Error', message, 'error');
+        }
+        
+        function showConfirm(message, callback) {
+            showPopup('Confirm', message, 'confirm', callback);
+        }
+    </script>
+    <script src="{% static 'js/script.js' %}"></script>
+    
+    <!-- PWA Service Worker -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/static/sw.js')
+                    .then(registration => {
+                        console.log('SW registered: ', registration);
+                    })
+                    .catch(registrationError => {
+                        console.log('SW registration failed: ', registrationError);
+                    });
+            });
+        }
+    </script>
+<!-- Environmental Impact Popup -->
+<div id="environmentalPopup" class="environmental-popup">
+    <div class="popup-content">
+        <h3>🌍 Welcome to Trashify!</h3>
+        <div class="popup-body">
+            <p>Learn how to make a real environmental impact through proper waste management and community action.</p>
+        </div>
+        <div class="popup-actions">
+            <a href="{% url 'training' %}" class="popup-btn primary">Go to Training</a>
+            <button class="popup-btn secondary" onclick="closeEnvironmentalPopup()">Maybe Later</button>
+        </div>
+    </div>
+</div>
+
+<style>
+.environmental-popup {
+    display: none;
+    position: fixed;
+    z-index: 10000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.6);
+    animation: fadeIn 0.3s ease-in;
+}
+
+.popup-content {
+    background: white;
+    margin: 15% auto;
+    padding: 2rem;
+    border-radius: 15px;
+    width: 90%;
+    max-width: 450px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    animation: slideIn 0.3s ease-out;
+    text-align: center;
+}
+
+.popup-content h3 {
+    margin: 0 0 1rem 0;
+    color: #28a745;
+    font-size: 1.5rem;
+}
+
+.popup-body {
+    margin-bottom: 1.5rem;
+}
+
+.popup-body p {
+    margin: 0;
+    color: #333;
+    font-size: 1.1rem;
+    line-height: 1.6;
+    font-weight: 500;
+}
+
+.popup-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.popup-btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    transition: all 0.3s;
+    min-width: 120px;
+    text-align: center;
+}
+
+.popup-btn.primary {
+    background: #28a745;
+    color: white;
+}
+
+.popup-btn.secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.popup-btn:hover {
+    transform: translateY(-2px);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideIn {
+    from { transform: translateY(-50px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+@media (max-width: 768px) {
+    .popup-actions {
+        flex-direction: column;
+    }
+    
+    .popup-btn {
+        width: 100%;
+    }
+}
+</style>
+
+<script>
+function showEnvironmentalPopup() {
+    document.getElementById('environmentalPopup').style.display = 'block';
+    document.body.style.overflow = 'hidden';
+}
+
+function closeEnvironmentalPopup() {
+    document.getElementById('environmentalPopup').style.display = 'none';
+    document.body.style.overflow = 'auto';
+}
+
+// Show popup when page loads (only for non-authenticated users on home page)
+{% if not user.is_authenticated %}
+window.addEventListener('load', function() {
+    if (window.location.pathname === '/') {
+        setTimeout(showEnvironmentalPopup, 1000);
+    }
+});
+{% endif %}
+</script>
+
+</body>
+</html>

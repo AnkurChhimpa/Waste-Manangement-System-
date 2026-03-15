@@ -1,0 +1,508 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Event Participants - Admin{% endblock %}
+
+{% block content %}
+<div class="admin-participants">
+    <div class="dashboard-header">
+        <div class="container">
+            <a href="/admin-dashboard/" class="back-btn">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </a>
+            <h1>Event Participants Management</h1>
+            <p>Review and approve volunteer applications for events</p>
+        </div>
+    </div>
+
+    <div class="participants-content">
+        <div class="container">
+            <div class="participants-stats">
+                <div class="stat-card">
+                    <div class="stat-number">{{ participants.count }}</div>
+                    <div class="stat-label">Total Applications</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">{{ participants|length|add:0 }}</div>
+                    <div class="stat-label">Pending Review</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">{{ events.count }}</div>
+                    <div class="stat-label">Active Events</div>
+                </div>
+            </div>
+
+            <div class="participants-list">
+                <div class="list-header">
+                    <h2>Participant Applications</h2>
+                    <div class="filters">
+                        <select id="statusFilter" onchange="filterParticipants()">
+                            <option value="all">All Status</option>
+                            <option value="pending">Pending</option>
+                            <option value="approved">Approved</option>
+                            <option value="rejected">Rejected</option>
+                        </select>
+                        <select id="eventFilter" onchange="filterParticipants()">
+                            <option value="all">All Events</option>
+                            {% for event in events %}
+                            <option value="{{ event.id }}">{{ event.title }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="participants-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Participant</th>
+                                <th>Event</th>
+                                <th>Contact</th>
+                                <th>Experience</th>
+                                <th>Applied</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for participant in participants %}
+                            <tr class="participant-row" data-status="{{ participant.status }}" data-event="{{ participant.event.id }}">
+                                <td>
+                                    <div class="participant-info">
+                                        <strong>{{ participant.name }}</strong>
+                                        <div class="availability">Available: {{ participant.availability }}</div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="event-info">
+                                        <strong>{{ participant.event.title }}</strong>
+                                        <div class="event-date">{{ participant.event.date|date:"M d, Y" }} at {{ participant.event.time|time:"g:i A" }}</div>
+                                        <div class="event-location">{{ participant.event.location }}</div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="contact-info">
+                                        <div><i class="fas fa-envelope"></i> {{ participant.email }}</div>
+                                        <div><i class="fas fa-phone"></i> {{ participant.phone }}</div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="experience">
+                                        {% if participant.experience %}
+                                        {{ participant.experience|truncatewords:10 }}
+                                        {% else %}
+                                        <em>No previous experience</em>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="applied-date">
+                                        {{ participant.joined_at|date:"M d, Y" }}
+                                        <div class="time-ago">{{ participant.joined_at|timesince }} ago</div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="status-badge status-{{ participant.status }}">
+                                        {{ participant.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        {% if participant.status == 'pending' %}
+                                        <button class="action-btn approve-btn" onclick="approveParticipant({{ participant.id }}, 'approve')">
+                                            <i class="fas fa-check"></i> Approve
+                                        </button>
+                                        <button class="action-btn reject-btn" onclick="approveParticipant({{ participant.id }}, 'reject')">
+                                            <i class="fas fa-times"></i> Reject
+                                        </button>
+                                        {% else %}
+                                        <button class="action-btn view-btn" onclick="viewParticipant({{ participant.id }})">
+                                            <i class="fas fa-eye"></i> View
+                                        </button>
+                                        {% endif %}
+                                        <button class="action-btn delete-btn" onclick="deleteParticipant({{ participant.id }}, '{{ participant.name|escapejs }}')">
+                                            <i class="fas fa-trash"></i> Delete
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="no-data">No participant applications found</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.admin-participants {
+    margin-top: 65px;
+    min-height: calc(100vh - 65px);
+}
+
+.dashboard-header {
+    background: linear-gradient(135deg, #dc3545, #fd7e14);
+    color: white;
+    padding: 4rem 0;
+    text-align: center;
+}
+
+.back-btn {
+    color: white;
+    text-decoration: none;
+    margin-bottom: 1rem;
+    display: inline-block;
+    opacity: 0.9;
+}
+
+.dashboard-header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.participants-content {
+    padding: 4rem 0;
+    background: #f8f9fa;
+}
+
+.participants-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.stat-card {
+    background: white;
+    padding: 2rem;
+    border-radius: 15px;
+    text-align: center;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #dc3545;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    color: #666;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.participants-list {
+    background: white;
+    border-radius: 15px;
+    padding: 2rem;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+}
+
+.list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.list-header h2 {
+    margin: 0;
+    color: #333;
+}
+
+.filters {
+    display: flex;
+    gap: 1rem;
+}
+
+.filters select {
+    padding: 8px 16px;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    background: white;
+    font-size: 0.9rem;
+}
+
+.participants-table {
+    overflow-x: auto;
+}
+
+.participants-table table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.participants-table th,
+.participants-table td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+.participants-table th {
+    background: #f8f9fa;
+    font-weight: 600;
+    color: #333;
+}
+
+.participant-info strong {
+    color: #333;
+    font-size: 1rem;
+}
+
+.availability {
+    font-size: 0.8rem;
+    color: #666;
+    margin-top: 0.25rem;
+}
+
+.event-info strong {
+    color: #333;
+}
+
+.event-date, .event-location {
+    font-size: 0.8rem;
+    color: #666;
+    margin-top: 0.25rem;
+}
+
+.contact-info div {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    color: #666;
+    margin-bottom: 0.25rem;
+}
+
+.contact-info i {
+    color: #28a745;
+    width: 12px;
+}
+
+.experience {
+    font-size: 0.9rem;
+    color: #666;
+    max-width: 200px;
+}
+
+.applied-date {
+    font-size: 0.9rem;
+    color: #333;
+}
+
+.time-ago {
+    font-size: 0.8rem;
+    color: #666;
+    margin-top: 0.25rem;
+}
+
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-pending {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status-approved {
+    background: #e8f5e8;
+    color: #2e7d32;
+}
+
+.status-rejected {
+    background: #ffebee;
+    color: #c62828;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.action-btn {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.approve-btn {
+    background: #28a745;
+    color: white;
+}
+
+.reject-btn {
+    background: #dc3545;
+    color: white;
+}
+
+.view-btn {
+    background: #6c757d;
+    color: white;
+}
+
+.delete-btn {
+    background: #dc3545;
+    color: white;
+}
+
+.action-btn:hover {
+    transform: translateY(-1px);
+}
+
+.no-data {
+    text-align: center;
+    color: #666;
+    font-style: italic;
+    padding: 2rem;
+}
+
+@media (max-width: 768px) {
+    .list-header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+    
+    .filters {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .filters select {
+        width: 100%;
+    }
+    
+    .participants-table {
+        font-size: 0.8rem;
+    }
+    
+    .participants-table th,
+    .participants-table td {
+        padding: 0.5rem;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+    }
+}
+</style>
+
+<script>
+function filterParticipants() {
+    const statusFilter = document.getElementById('statusFilter').value;
+    const eventFilter = document.getElementById('eventFilter').value;
+    const rows = document.querySelectorAll('.participant-row');
+    
+    rows.forEach(row => {
+        const status = row.getAttribute('data-status');
+        const eventId = row.getAttribute('data-event');
+        
+        let showRow = true;
+        
+        if (statusFilter !== 'all' && status !== statusFilter) {
+            showRow = false;
+        }
+        
+        if (eventFilter !== 'all' && eventId !== eventFilter) {
+            showRow = false;
+        }
+        
+        row.style.display = showRow ? '' : 'none';
+    });
+}
+
+function approveParticipant(participantId, action) {
+    const actionText = action === 'approve' ? 'approve' : 'reject';
+    
+    if (confirm(`Are you sure you want to ${actionText} this participant?`)) {
+        fetch('/admin-approve-participant/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()
+            },
+            body: JSON.stringify({
+                participant_id: participantId,
+                action: action
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error processing request. Please try again.');
+        });
+    }
+}
+
+function getCsrfToken() {
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+        const [name, value] = cookie.trim().split('=');
+        if (name === 'csrftoken') {
+            return value;
+        }
+    }
+    return '';
+}
+
+function deleteParticipant(participantId, participantName) {
+    if (confirm(`Are you sure you want to remove participant "${participantName}"? This action cannot be undone.`)) {
+        fetch('/delete-participant/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()
+            },
+            body: JSON.stringify({ participant_id: participantId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error deleting participant. Please try again.');
+        });
+    }
+}
+
+function viewParticipant(participantId) {
+    alert('Participant details view will be implemented soon!');
+}
+</script>
+{% endblock %}
